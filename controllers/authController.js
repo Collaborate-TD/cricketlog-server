@@ -11,10 +11,14 @@ const loginUser = async (req, res) => {
     }
 
     try {
-        const user = await User.findOne(
-            { email: userData.toLowerCase() },
-            { username: userData }
+        const user = await User.findOne({
+            $or: [
+                { email: userData.toLowerCase() },
+                { userName: userData }
+            ]
+        }
         );
+
 
         if (!user) {
             return res.status(401).json({ message: 'Invalid username or password.' });
@@ -53,12 +57,16 @@ const loginUser = async (req, res) => {
 const registerUser = async (req, res) => {
     const { userName, firstName, lastName, email, password, role } = req.body;
 
-    if (!userName || !firstName || !lastName || !email || !password || !role) {
+    if (!userName | !firstName | !lastName | !email | !password | !role) {
         return res.status(400).json({ message: 'Email, password, and role are required.' });
     }
 
     try {
-        const existingUser = await User.findOne({ email: email.toLowerCase() });
+        const existingUser = await User.findOne({
+            $or: [
+                { email: email.toLowerCase() }, { userName }
+            ]
+        });
         if (existingUser) {
             return res.status(409).json({ message: 'User already exists.' });
         }
@@ -66,6 +74,9 @@ const registerUser = async (req, res) => {
         const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         const user = new User({
+            userName,
+            firstName,
+            lastName,
             email: email.toLowerCase(),
             password: hashedPassword,
             role
