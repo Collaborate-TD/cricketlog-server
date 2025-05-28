@@ -3,9 +3,9 @@ import { deleteUser, getUserDetails, getUserList, updateUser } from '../controll
 
 const router = express.Router();
 
-router.post('/details', getUserDetails);
+router.get('/:id', getUserDetails);
 router.post('/list', getUserList);
-router.post('/update', updateUser);
-router.post('/delete', deleteUser);
+router.put('/:id', updateUser);
+router.delete('/delete', deleteUser);
 
 export default router;
