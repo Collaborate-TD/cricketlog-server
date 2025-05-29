@@ -16,7 +16,9 @@ const getUserDetails = async (req, res) => {
 // Get list of all users
 const getUserList = async (req, res) => {
     try {
-        const users = await User.find().select('-password');
+        const filters = req.body;
+        const users = await User.find(filters).select('-password');
+
         res.status(200).json(users);
     } catch (err) {
         console.error('Get Users Error:', err);
