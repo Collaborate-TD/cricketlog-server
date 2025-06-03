@@ -1,7 +1,8 @@
 import User from '../models/User.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { loginSchema, registerSchema } from '../validation/authValidation.js';
+import crypto from 'crypto';
+import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from '../validation/authValidation.js';
 
 // LOGIN
 const loginUser = async (req, res) => {
@@ -101,4 +102,85 @@ const registerUser = async (req, res) => {
     }
 };
 
-export { loginUser, registerUser };
+// FORGOT PASSWORD
+const forgotPassword = async (req, res) => {
+    const { error } = forgotPasswordSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+        // Generate token
+        const token = crypto.randomBytes(32).toString('hex');
+        user.resetPasswordToken = token;
+        user.resetPasswordExpires = Date.now() + 1000 * 60 * 60; // 1 hour
+        await user.save();
+
+        // In production, send email. Here, just return the link.
+        const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+        return res.status(200).json({ message: 'Reset link sent.', resetLink });
+    } catch (err) {
+        console.error('Forgot Password Error:', err);
+        return res.status(500).json({ message: 'Server error during password reset.' });
+    }
+};
+
+// VALIDATE RESET TOKEN
+const validateResetToken = async (req, res) => {
+    const { token } = req.query;
+    if (!token) {
+        return res.status(400).json({ message: 'Token is required.' });
+    }
+    try {
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired token.' });
+        }
+        return res.status(200).json({ message: 'Token is valid.' });
+    } catch (err) {
+        console.error('Validate Token Error:', err);
+        return res.status(500).json({ message: 'Server error during token validation.' });
+    }
+};
+
+// RESET PASSWORD
+const resetPassword = async (req, res) => {
+    const { error } = resetPasswordSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+    const { token, password } = req.body;
+    try {
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired token.' });
+        }
+        const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10;
+        user.password = await bcrypt.hash(password, saltRounds);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+        return res.status(200).json({ message: 'Password updated successfully.' });
+    } catch (err) {
+        console.error('Reset Password Error:', err);
+        return res.status(500).json({ message: 'Server error during password update.' });
+    }
+};
+
+export {
+    loginUser,
+    registerUser,
+    forgotPassword,
+    validateResetToken,
+    resetPassword
+};
