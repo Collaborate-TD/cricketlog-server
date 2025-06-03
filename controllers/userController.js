@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import { USER_ROLES } from '../constants/userRoles.js';
+import { updateUserSchema } from '../validation/userValidation.js';
 
 // Get single user by ID
 const getUserDetails = async (req, res) => {
@@ -34,6 +35,11 @@ const getUserList = async (req, res) => {
 
 // Update user by ID
 const updateUser = async (req, res) => {
+    // Validate input
+    const { error } = updateUserSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
     try {
         const updates = req.body;
         if (updates.password) delete updates.password;

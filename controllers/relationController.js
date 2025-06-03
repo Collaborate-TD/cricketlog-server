@@ -1,9 +1,15 @@
 import User from '../models/User.js';
 import { RELATION_STATUS, REQUEST_TYPES } from '../constants/relationStatus.js';
+import { requestRelationSchema, approveDeclineRelationSchema } from '../validation/relationValidation.js';
 
 // Send a relation request (student to coach or coach to student)
 export const requestRelation = async (req, res) => {
-    const { requesterId, targetId } = req.body; // requester sends request to target
+    // Validate input
+    const { error } = requestRelationSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+    const { requesterId, targetId } = req.body;
     try {
         // Check if relation already exists for requester
         const requester = await User.findById(requesterId);
@@ -55,6 +61,11 @@ export const requestRelation = async (req, res) => {
 
 // Approve a relation request (either direction)
 export const approveRelation = async (req, res) => {
+    // Validate input
+    const { error } = approveDeclineRelationSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
     const { approverId, requesterId } = req.body; // approverId is the user who is trying to approve, requesterId is the one who sent the request
     try {
         // Only allow if approver has a 'received' request from requester
@@ -83,6 +94,11 @@ export const approveRelation = async (req, res) => {
 
 // Decline a relation request (either direction)
 export const declineRelation = async (req, res) => {
+    // Validate input
+    const { error } = approveDeclineRelationSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
     const { approverId, requesterId } = req.body; // approverId is the user who is trying to decline, requesterId is the one who sent the request
     try {
         // Only allow if approver has a 'received' request from requester

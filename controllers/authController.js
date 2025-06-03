@@ -1,9 +1,15 @@
 import User from '../models/User.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { loginSchema, registerSchema } from '../validation/authValidation.js';
 
 // LOGIN
 const loginUser = async (req, res) => {
+    const { error } = loginSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+
     const { userData, password } = req.body;
 
     if (!userData || !password) {
@@ -55,6 +61,11 @@ const loginUser = async (req, res) => {
 
 // REGISTER
 const registerUser = async (req, res) => {
+    const { error } = registerSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+
     const { userName, firstName, lastName, email, password, role } = req.body;
 
     if (!userName | !firstName | !lastName | !email | !password | !role) {
