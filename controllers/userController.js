@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import { USER_ROLES } from '../constants/userRoles.js';
 
 // Get single user by ID
 const getUserDetails = async (req, res) => {
@@ -17,8 +18,13 @@ const getUserDetails = async (req, res) => {
 const getUserList = async (req, res) => {
     try {
         const filters = req.body;
-        const users = await User.find(filters).select('-password');
 
+        // If filtering by role, use USER_ROLES constants
+        if (filters.role && Object.values(USER_ROLES).includes(filters.role)) {
+            filters.role = filters.role;
+        }
+
+        const users = await User.find(filters).select('-password');
         res.status(200).json(users);
     } catch (err) {
         console.error('Get Users Error:', err);
@@ -30,8 +36,8 @@ const getUserList = async (req, res) => {
 const updateUser = async (req, res) => {
     try {
         const updates = req.body;
-        if (updates.password) delete updates.password; // disallow password update here
-        if (updates.email) delete updates.email; // disallow password update here
+        if (updates.password) delete updates.password;
+        if (updates.email) delete updates.email;
 
         // Check for unique username
         if (updates.userName) {
@@ -73,4 +79,73 @@ const deleteUser = async (req, res) => {
     }
 };
 
-export { getUserDetails, getUserList, updateUser, deleteUser };
+const getOtherUserDetails = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        if (!userId) {
+            return res.status(400).json({ message: 'userId is required.' });
+        }
+        const user = await User.findById(userId).select('firstName lastName email userName role createdAt updatedAt');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+        res.status(200).json(user);
+    } catch (err) {
+        console.error('Get User Details Error:', err);
+        res.status(500).json({ message: 'Server error while fetching user details.' });
+    }
+};
+
+const getMatchedUsers = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: 'User not found.' });
+
+        // Find userIds with approved relation
+        const matchedIds = user.relation
+            .filter(rel => rel.status === 'approved')
+            .map(rel => rel.userId);
+
+        const matchedUsers = await User.find({ _id: { $in: matchedIds } })
+            .select('firstName lastName email userName role createdAt updatedAt');
+
+        res.status(200).json(matchedUsers);
+    } catch (err) {
+        console.error('Get Matched Users Error:', err);
+        res.status(500).json({ message: 'Server error while fetching matched users.' });
+    }
+};
+
+const getUnmatchedUsers = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: 'User not found.' });
+
+        // Collect only approved userIds
+        const approvedIds = user.relation
+            .filter(rel => rel.status === 'approved')
+            .map(rel => rel.userId.toString());
+        approvedIds.push(userId); // Exclude self
+
+        // Find users not in approvedIds
+        const unmatchedUsers = await User.find({ _id: { $nin: approvedIds } })
+            .select('firstName lastName email userName role createdAt updatedAt');
+
+        res.status(200).json(unmatchedUsers);
+    } catch (err) {
+        console.error('Get Unmatched Users Error:', err);
+        res.status(500).json({ message: 'Server error while fetching unmatched users.' });
+    }
+};
+
+export {
+    getUserDetails,
+    getUserList,
+    updateUser,
+    deleteUser,
+    getOtherUserDetails,
+    getMatchedUsers,
+    getUnmatchedUsers
+};
