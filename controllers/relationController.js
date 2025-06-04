@@ -29,11 +29,11 @@ export const requestRelation = async (req, res) => {
             }
         }
 
-        // Update requester
+        // Update requester (student)
         await User.findByIdAndUpdate(requesterId, {
             $push: {
                 relation: {
-                    userId: targetId,
+                    userId: targetId, // coach's ID
                     status: RELATION_STATUS.REQUESTED,
                     requestType: REQUEST_TYPES.SENT,
                     requestDate: new Date(),
@@ -41,11 +41,11 @@ export const requestRelation = async (req, res) => {
                 }
             }
         });
-        // Update target (add requester to their relation array)
+        // Update target (coach)
         await User.findByIdAndUpdate(targetId, {
             $push: {
                 relation: {
-                    userId: requesterId,
+                    userId: requesterId, // student's ID
                     status: RELATION_STATUS.REQUESTED,
                     requestType: REQUEST_TYPES.RECEIVED,
                     requestDate: new Date(),
@@ -123,4 +123,53 @@ export const declineRelation = async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+};
+
+export const getCoachRequests = async (req, res) => {
+  try {
+    // Find all users (students) who have a pending request to this coach
+    const students = await User.find({
+      role: 'student',
+      relation: {
+        $elemMatch: {
+          userId: req.params.coachId,
+          status: 'requested',
+          requestType: 'sent'
+        }
+      }
+    });
+
+    // Format the response for the frontend
+    const requests = [];
+    students.forEach(student => {
+      const rel = student.relation.find(r =>
+        r.userId.toString() === req.params.coachId &&
+        r.status === 'requested' &&
+        r.requestType === 'sent'
+      );
+      if (rel) {
+        requests.push({
+          _id: rel._id,
+          studentName: `${student.firstName} ${student.lastName}`,
+          studentEmail: student.email,
+          studentId: student._id
+        });
+      }
+    });
+
+    res.json(requests);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getStudentRequests = async (req, res) => {
+  try {
+    const student = await User.findById(req.params.studentId);
+    if (!student) return res.status(404).json({ message: 'Student not found' });
+    // Return all relations (requests) sent by the student
+    res.json(student.relation);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };

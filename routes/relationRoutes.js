@@ -1,5 +1,5 @@
 import express from 'express';
-import { requestRelation, approveRelation, declineRelation } from '../controllers/relationController.js';
+import { requestRelation, approveRelation, declineRelation, getStudentRequests, getCoachRequests } from '../controllers/relationController.js';
 
 const router = express.Router();
 
@@ -11,5 +11,11 @@ router.post('/approve', approveRelation);
 
 // Decline a relation request
 router.post('/decline', declineRelation);
+
+// Get all requests for a student
+router.get('/student/:studentId', getStudentRequests);
+
+// Get all requests for a coach
+router.get('/coach/:coachId', getCoachRequests);
 
 export default router;
