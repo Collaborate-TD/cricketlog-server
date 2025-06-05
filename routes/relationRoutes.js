@@ -1,16 +1,18 @@
 import express from 'express';
-import { requestRelation, approveRelation, declineRelation, getStudentRequests, getCoachRequests } from '../controllers/relationController.js';
+import {
+    requestRelation,
+    getStudentRequests,
+    getCoachRequests,
+    handleRelationAction
+} from '../controllers/relationController.js';
 
 const router = express.Router();
 
 // Send a relation request
 router.post('/request', requestRelation);
 
-// Approve a relation request
-router.post('/approve', approveRelation);
-
-// Decline a relation request
-router.post('/decline', declineRelation);
+// Approve/Reject a relation request
+router.post('/action', handleRelationAction);
 
 // Get all requests for a student
 router.get('/student/:studentId', getStudentRequests);

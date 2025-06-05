@@ -116,7 +116,16 @@ const getMatchedUsers = async (req, res) => {
         const matchedUsers = await User.find({ _id: { $in: matchedIds } })
             .select('firstName lastName email userName role createdAt updatedAt');
 
-        res.status(200).json(matchedUsers);
+        // Attach relation status if exists
+        const usersWithStatus = matchedUsers.map(u => {
+            const rel = user.relation.find(r => r.userId.toString() === u._id.toString());
+            return {
+                ...u.toObject(),
+                status: rel ? rel.status : null
+            };
+        });
+
+        res.status(200).json(usersWithStatus);
     } catch (err) {
         console.error('Get Matched Users Error:', err);
         res.status(500).json({ message: 'Server error while fetching matched users.' });
@@ -135,11 +144,27 @@ const getUnmatchedUsers = async (req, res) => {
             .map(rel => rel.userId.toString());
         approvedIds.push(userId); // Exclude self
 
-        // Find users not in approvedIds
-        const unmatchedUsers = await User.find({ _id: { $nin: approvedIds } })
-            .select('firstName lastName email userName role createdAt updatedAt');
+        // Find users not in approvedIds and with opposite role
+        const oppositeRole = user.role === 'student' ? 'coach' : 'student';
+        const unmatchedUsers = await User.find({
+            _id: { $nin: approvedIds },
+            role: oppositeRole
+        }).select('firstName lastName email userName role createdAt updatedAt');
 
-        res.status(200).json(unmatchedUsers);
+        // Attach relation status if exists
+        const usersWithStatus = unmatchedUsers.map(u => {
+            const rel = user.relation.find(r => r.userId.toString() === u._id.toString());
+            const userObj = u.toObject();
+            userObj.userId = userObj._id;
+            delete userObj._id;
+            return {
+                ...userObj,
+                requestType: rel ? rel.requestType : null,
+                status: rel ? rel.status : null
+            };
+        });
+
+        res.status(200).json(usersWithStatus);
     } catch (err) {
         console.error('Get Unmatched Users Error:', err);
         res.status(500).json({ message: 'Server error while fetching unmatched users.' });
