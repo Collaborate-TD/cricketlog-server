@@ -6,8 +6,7 @@ import { getVideoListSchema } from '../validation/videoValidation.js';
 
 // Get list of all videos
 const getVideoList = async (req, res) => {
-    // Joi validation
-    const { error } = getVideoListSchema.validate(req.body);
+    const { error } = getVideoListSchema.validate(req.body, { stripUnknown: true });
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
@@ -22,17 +21,33 @@ const getVideoList = async (req, res) => {
         }
 
         let userIds = [];
+        const param = {};
         if (user.role === 'coach') {
-            userIds = user.relation
-                .filter(r => r.status === 'approved')
-                .map(r => r.userId);
+            if (req.body.params.studentId) {
+                // If studentId is provided, fetch only that student's videos
+                userIds = [req.body.params.studentId];
+            } else {
+                // If no studentId, fetch all students under this coach
+                userIds = user.relation
+                    .filter(r => r.status === 'approved')
+                    .map(r => r.userId);
+            }
         }
         else {
-            userIds = [userId];
+            if (req.body.params.coachId) {
+                param.feedback = { $elemMatch: { coachId } };
+            }
+            else {
+                // If no coachId, fetch all of my own videos
+                userIds = [userId];
+            }
         }
 
         // Find videos for these userIds
-        const videos = await Video.find({ userId: { $in: userIds } }).sort({ createdAt: -1 });
+        const videos = await Video.find({
+            userId: { $in: userIds },
+            ...param
+        }).sort({ createdAt: -1 });
 
         const list = videos.map(video => {
             const filePath = path.join('data', 'videos', video.userId.toString(), 'raw', video.fileName);

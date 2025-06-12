@@ -5,7 +5,7 @@ import { requestRelationSchema, approveDeclineRelationSchema } from '../validati
 // Send a relation request (student to coach or coach to student)
 export const requestRelation = async (req, res) => {
     // Validate input
-    const { error } = requestRelationSchema.validate(req.body);
+    const { error } = requestRelationSchema.validate(req.body, { stripUnknown: true });
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
@@ -60,7 +60,7 @@ export const requestRelation = async (req, res) => {
 };
 
 export const handleRelationAction = async (req, res) => {
-    const { error } = approveDeclineRelationSchema.validate(req.body);
+    const { error } = approveDeclineRelationSchema.validate(req.body, { stripUnknown: true });
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }

@@ -6,7 +6,7 @@ import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema 
 
 // LOGIN
 const loginUser = async (req, res) => {
-    const { error } = loginSchema.validate(req.body);
+    const { error } = loginSchema.validate(req.body, { stripUnknown: true });
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
@@ -62,7 +62,7 @@ const loginUser = async (req, res) => {
 
 // REGISTER
 const registerUser = async (req, res) => {
-    const { error } = registerSchema.validate(req.body);
+    const { error } = registerSchema.validate(req.body, { stripUnknown: true });
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
@@ -104,7 +104,7 @@ const registerUser = async (req, res) => {
 
 // FORGOT PASSWORD
 const forgotPassword = async (req, res) => {
-    const { error } = forgotPasswordSchema.validate(req.body);
+    const { error } = forgotPasswordSchema.validate(req.body, { stripUnknown: true });
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
@@ -152,7 +152,7 @@ const validateResetToken = async (req, res) => {
 
 // RESET PASSWORD
 const resetPassword = async (req, res) => {
-    const { error } = resetPasswordSchema.validate(req.body);
+    const { error } = resetPasswordSchema.validate(req.body, { stripUnknown: true });
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
