@@ -5,7 +5,9 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import relationRoutes from './routes/relationRoutes.js';
+import fileRoutes from './routes/fileRoutes.js';
 import videoRoutes from './routes/videoRoutes.js';
+import path from 'path';
 
 dotenv.config(); // Load environment variables
 
@@ -13,8 +15,8 @@ const app = express();
 app.use(cors());
 app.use(json());
 
-// Serve the "temp" folder as static
-app.use('/temp', express.static('temp'));
+// Serve static files
+app.use('/data', express.static(path.join(process.cwd(), 'data')));
 
 connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('MongoDB connected'))
@@ -23,7 +25,8 @@ connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true
 app.use('/auth', authRoutes);
 app.use("/user", userRoutes);
 app.use("/relation", relationRoutes);
-app.use("/video", videoRoutes);
+app.use("/file", fileRoutes);
+app.use("/video", videoRoutes); // for /video/lists/:userId
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
