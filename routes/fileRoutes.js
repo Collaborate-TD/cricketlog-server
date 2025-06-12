@@ -62,7 +62,7 @@ router.post('/upload', upload.array('videos', 10), async (req, res) => {
             fs.renameSync(file.path, destPath);
 
             const url = `/data/videos/${userId}/raw/${newFileName}`;
-            const thumbnailUrl = `${process.env.BACKEND_URL}${url}`;
+            const thumbnailUrl = `${url}`;
             const uploadedAt = new Date(timestamp);
 
             // Save to DB

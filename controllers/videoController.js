@@ -54,7 +54,7 @@ const getVideoList = async (req, res) => {
             const fileExists = fs.existsSync(filePath);
             return {
                 _id: video._id,
-                url: fileExists ? video.thumbnailUrl : null,
+                url: fileExists ? `${process.env.BACKEND_URL}${video.thumbnailUrl}` : null,
                 thumbnailUrl: fileExists ? video.thumbnailUrl : null,
                 title: video.originalName || video.fileName
             };
