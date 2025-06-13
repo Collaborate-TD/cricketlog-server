@@ -3,14 +3,14 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import generateRandomString from '../utils/generateRandomString.js';
+import generateRandomString from '../utils/src/generateRandomString.js';
 import Video from '../models/Video.js';
 
 const router = express.Router();
 
 // Allowed extensions and max size
 const allowedExtensions = ['.mp4', '.mov', '.avi'];
-const MAX_SIZE = 6 * 1024 * 1024; // 5MB
+const MAX_SIZE = 60 * 1024 * 1024; // 5MB
 
 // Multer storage for temp folder
 const tempStorage = multer.diskStorage({
