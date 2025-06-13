@@ -9,7 +9,7 @@ router.put('/:id', updateUser);
 router.delete('/delete', deleteUser);
 
 router.get('/details/:id', getOtherUserDetails);
-router.get('/:id/matched', getMatchedUsers);
-router.get('/:id/unmatched', getUnmatchedUsers);
+router.post('/:id/matched', getMatchedUsers);
+router.post('/:id/unmatched', getUnmatchedUsers);
 
 export default router;

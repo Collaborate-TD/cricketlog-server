@@ -5,7 +5,7 @@ import { requestRelationSchema, approveDeclineRelationSchema } from '../validati
 // Send a relation request (student to coach or coach to student)
 export const requestRelation = async (req, res) => {
     // Validate input
-    const { error } = requestRelationSchema.validate(req.body);
+    const { error } = requestRelationSchema.validate(req.body, { stripUnknown: true });
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
@@ -29,11 +29,11 @@ export const requestRelation = async (req, res) => {
             }
         }
 
-        // Update requester
+        // Update requester (student)
         await User.findByIdAndUpdate(requesterId, {
             $push: {
                 relation: {
-                    userId: targetId,
+                    userId: targetId, // coach's ID
                     status: RELATION_STATUS.REQUESTED,
                     requestType: REQUEST_TYPES.SENT,
                     requestDate: new Date(),
@@ -41,11 +41,11 @@ export const requestRelation = async (req, res) => {
                 }
             }
         });
-        // Update target (add requester to their relation array)
+        // Update target (coach)
         await User.findByIdAndUpdate(targetId, {
             $push: {
                 relation: {
-                    userId: requesterId,
+                    userId: requesterId, // student's ID
                     status: RELATION_STATUS.REQUESTED,
                     requestType: REQUEST_TYPES.RECEIVED,
                     requestDate: new Date(),
@@ -59,68 +59,97 @@ export const requestRelation = async (req, res) => {
     }
 };
 
-// Approve a relation request (either direction)
-export const approveRelation = async (req, res) => {
-    // Validate input
-    const { error } = approveDeclineRelationSchema.validate(req.body);
+export const handleRelationAction = async (req, res) => {
+    const { error } = approveDeclineRelationSchema.validate(req.body, { stripUnknown: true });
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
-    const { approverId, requesterId } = req.body; // approverId is the user who is trying to approve, requesterId is the one who sent the request
+    const { approverId, requesterId, action, feedback } = req.body;
+
     try {
         // Only allow if approver has a 'received' request from requester
         const approver = await User.findById(approverId);
         const relation = approver.relation.find(
-            rel => rel.userId.toString() === requesterId && rel.requestType === REQUEST_TYPES.RECEIVED && rel.status === RELATION_STATUS.REQUESTED
+            rel => rel.userId.toString() === requesterId &&
+                rel.requestType === REQUEST_TYPES.RECEIVED &&
+                rel.status === RELATION_STATUS.REQUESTED
         );
         if (!relation) {
-            return res.status(403).json({ message: "You are not authorized to approve this request." });
+            return res.status(403).json({ message: `You are not authorized to ${action} this request.` });
         }
 
-        // Update both users' relation status to approved
+        // Update both users' relation status
         await User.updateOne(
             { _id: approverId, "relation.userId": requesterId, "relation.requestType": REQUEST_TYPES.RECEIVED },
-            { $set: { "relation.$.status": RELATION_STATUS.APPROVED, "relation.$.approvedDate": new Date() } }
+            {
+                $set: {
+                    "relation.$.status": action,
+                    "relation.$.approvedDate": new Date(),
+                    "relation.$.feedback": feedback
+                }
+            }
         );
         await User.updateOne(
             { _id: requesterId, "relation.userId": approverId, "relation.requestType": REQUEST_TYPES.SENT },
-            { $set: { "relation.$.status": RELATION_STATUS.APPROVED, "relation.$.approvedDate": new Date() } }
+            {
+                $set: {
+                    "relation.$.status": action,
+                    "relation.$.approvedDate": new Date(),
+                    "relation.$.feedback": feedback
+                }
+            }
         );
-        res.status(200).json({ message: 'Request approved' });
+        res.status(200).json({ message: `Request ${feedback || " viewed"}` });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
 
-// Decline a relation request (either direction)
-export const declineRelation = async (req, res) => {
-    // Validate input
-    const { error } = approveDeclineRelationSchema.validate(req.body);
-    if (error) {
-        return res.status(400).json({ message: error.details[0].message });
-    }
-    const { approverId, requesterId } = req.body; // approverId is the user who is trying to decline, requesterId is the one who sent the request
+export const getCoachRequests = async (req, res) => {
     try {
-        // Only allow if approver has a 'received' request from requester
-        const approver = await User.findById(approverId);
-        const relation = approver.relation.find(
-            rel => rel.userId.toString() === requesterId && rel.requestType === REQUEST_TYPES.RECEIVED && rel.status === RELATION_STATUS.REQUESTED
-        );
-        if (!relation) {
-            return res.status(403).json({ message: "You are not authorized to decline this request." });
-        }
+        // Find all users (students) who have a pending request to this coach
+        const students = await User.find({
+            role: 'student',
+            relation: {
+                $elemMatch: {
+                    userId: req.params.coachId,
+                    status: 'requested',
+                    requestType: 'sent'
+                }
+            }
+        });
 
-        // Update both users' relation status to rejected
-        await User.updateOne(
-            { _id: approverId, "relation.userId": requesterId, "relation.requestType": REQUEST_TYPES.RECEIVED },
-            { $set: { "relation.$.status": RELATION_STATUS.REJECTED, "relation.$.approvedDate": new Date() } }
-        );
-        await User.updateOne(
-            { _id: requesterId, "relation.userId": approverId, "relation.requestType": REQUEST_TYPES.SENT },
-            { $set: { "relation.$.status": RELATION_STATUS.REJECTED, "relation.$.approvedDate": new Date() } }
-        );
-        res.status(200).json({ message: 'Request declined' });
+        // Format the response for the frontend
+        const requests = [];
+        students.forEach(student => {
+            const rel = student.relation.find(r =>
+                r.userId.toString() === req.params.coachId &&
+                r.status === 'requested' &&
+                r.requestType === 'sent'
+            );
+            if (rel) {
+                requests.push({
+                    _id: rel._id,
+                    studentName: `${student.firstName} ${student.lastName}`,
+                    studentEmail: student.email,
+                    studentId: student._id
+                });
+            }
+        });
+
+        res.json(requests);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ message: err.message });
+    }
+};
+
+export const getStudentRequests = async (req, res) => {
+    try {
+        const student = await User.findById(req.params.studentId);
+        if (!student) return res.status(404).json({ message: 'Student not found' });
+        // Return all relations (requests) sent by the student
+        res.json(student.relation);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 };
