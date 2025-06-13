@@ -31,6 +31,7 @@ const getVideoList = async (req, res) => {
                 userIds = user.relation
                     .filter(r => r.status === 'approved')
                     .map(r => r.userId);
+                userIds.push(userId); // Include coach's own videos
             }
         }
         else {
