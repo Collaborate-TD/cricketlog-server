@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
     userName: { type: String, required: true, unique: true },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
+    profilePhoto: { type: String, default: null },
     password: { type: String, required: true },
     role: { type: String, enum: Object.values(USER_ROLES), required: true },
     relation: { type: [relationSchema], default: [] },

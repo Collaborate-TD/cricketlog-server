@@ -26,7 +26,7 @@ app.use('/auth', authRoutes);
 app.use("/user", userRoutes);
 app.use("/relation", relationRoutes);
 app.use("/file", fileRoutes);
-app.use("/video", videoRoutes); // for /video/lists/:userId
+app.use("/video", videoRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

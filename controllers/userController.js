@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import { USER_ROLES } from '../constants/userRoles.js';
 import { updateUserSchema } from '../validation/userValidation.js';
+import { saveProfilePhoto } from '../utils/src/profilePhotoHandler.js';
 
 // Get single user by ID
 const getUserDetails = async (req, res) => {
@@ -45,6 +46,9 @@ const updateUser = async (req, res) => {
         if (updates.password) delete updates.password;
         if (updates.email) delete updates.email;
 
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: 'User not found.' });
+
         // Check for unique username
         if (updates.userName) {
             const existingUser = await User.findOne({
@@ -55,6 +59,15 @@ const updateUser = async (req, res) => {
             if (existingUser) {
                 return res.status(409).json({ message: 'Username is already taken by another user.' });
             }
+        }
+
+        if (updates.profilePhoto) {
+            const profilePhoto = saveProfilePhoto({
+                filename: updates.profilePhoto,
+                userId: req.params.id,
+                username: user.userName
+            });
+            updates.profilePhoto = profilePhoto;
         }
 
         const updatedUser = await User.findByIdAndUpdate(
@@ -156,7 +169,7 @@ const getUnmatchedUsers = async (req, res) => {
             const rel = user.relation.find(r => r.userId.toString() === u._id.toString());
             const userObj = u.toObject();
             userObj.userId = userObj._id;
-            delete userObj._id;
+
             return {
                 ...userObj,
                 requestType: rel ? rel.requestType : null,

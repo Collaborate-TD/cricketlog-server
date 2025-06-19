@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from '../validation/authValidation.js';
+import { saveProfilePhoto } from '../utils/src/profilePhotoHandler.js';
 
 // LOGIN
 const loginUser = async (req, res) => {
@@ -36,6 +37,10 @@ const loginUser = async (req, res) => {
             return res.status(401).json({ message: 'Invalid email or password.' });
         }
 
+        const profilePhotoUrl = user.profilePhoto
+            ? `${process.env.BACKEND_URL}/data/profile/${user._id}/${user.profilePhoto}`
+            : null;
+
         const token = jwt.sign(
             {
                 id: user._id,
@@ -43,7 +48,8 @@ const loginUser = async (req, res) => {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                profilePhoto: profilePhotoUrl
             },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRY }
@@ -52,7 +58,15 @@ const loginUser = async (req, res) => {
         return res.status(200).json({
             message: 'Login successful.',
             token,
-            role: user.role
+            user: {
+                id: user._id,
+                userName: user.userName,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                role: user.role,
+                profilePhoto: profilePhotoUrl
+            }
         });
     } catch (err) {
         console.error('Login Error:', err);
@@ -85,6 +99,8 @@ const registerUser = async (req, res) => {
 
         const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        // Save user first to get userId for folder
         const user = new User({
             userName,
             firstName,
@@ -94,6 +110,18 @@ const registerUser = async (req, res) => {
             role
         });
         await user.save();
+
+        // Handle profile photo if present
+        let profilePhotoFileName = null;
+        if (req.file) {
+            profilePhotoFileName = saveProfilePhoto({
+                file: req.file,
+                userId: user._id.toString(),
+                username: userName
+            });
+            user.profilePhoto = profilePhotoFileName;
+            await user.save();
+        }
 
         return res.status(201).json({ message: 'User registered successfully.' });
     } catch (err) {
