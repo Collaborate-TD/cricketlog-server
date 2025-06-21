@@ -115,7 +115,7 @@ const registerUser = async (req, res) => {
         let profilePhotoFileName = null;
         if (req.body.profilePhoto) {
             profilePhotoFileName = saveProfilePhoto({
-                fileName: req.body.profilePhoto,
+                filename: req.body.profilePhoto,
                 userId: user._id.toString(),
                 username: userName
             });
