@@ -2,7 +2,7 @@ import User from '../models/User.js';
 import Video from '../models/Video.js';
 import path from 'path';
 import fs from 'fs';
-import { getVideoListSchema } from '../validation/videoValidation.js';
+import { getVideoListSchema, updateVideoSchema } from '../validation/videoValidation.js';
 import generateRandomString from '../utils/src/generateRandomString.js';
 
 // Get list of all videos
@@ -69,6 +69,7 @@ const getVideoList = async (req, res) => {
     }
 };
 
+// Upload video files
 const uploadVideo = async (req, res) => {
     try {
         const { userId, username } = req.body;
@@ -122,7 +123,39 @@ const uploadVideo = async (req, res) => {
     }
 };
 
+// Edit video details (e.g., title, description, etc.)
+const editDetails = async (req, res) => {
+    // Validate and strip unknown fields
+    const { value: updateDetails, error } = updateVideoSchema.validate(req.body, { stripUnknown: true });
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+
+    const videoId = req.params.id;
+    if (!videoId) {
+        return res.status(400).json({ message: 'videoId is required in URL parameter' });
+    }
+
+    try {
+        const video = await Video.findById(videoId);
+        if (!video) return res.status(404).json({ message: 'Video not found.' });
+
+        const updatedVideo = await Video.findByIdAndUpdate(
+            videoId,
+            updateDetails,
+            { new: true, runValidators: true }
+        );
+        if (!updatedVideo) return res.status(404).json({ message: 'Video not found.' });
+
+        res.status(200).json({ message: 'Video updated successfully.', video: updatedVideo });
+    } catch (err) {
+        console.error('Update Video Error:', err);
+        res.status(500).json({ message: 'Server error while updating video.' });
+    }
+};
+
 export {
     getVideoList,
-    uploadVideo
+    uploadVideo,
+    editDetails
 };

@@ -1,5 +1,5 @@
 import express from 'express';
-import { getVideoList, uploadVideo } from '../controllers/videoController.js';
+import { getVideoList, uploadVideo, editDetails } from '../controllers/videoController.js';
 import { getTempMulterUpload } from '../utils/src/multerUpload.js';
 
 const router = express.Router();
@@ -17,5 +17,8 @@ router.post('/list', getVideoList);
 
 // Upload videos
 router.post('/upload', videoUpload, uploadVideo);
+
+// Edit video details
+router.put('/:id', editDetails);
 
 export default router;

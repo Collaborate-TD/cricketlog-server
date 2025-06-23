@@ -36,16 +36,12 @@ const getUserList = async (req, res) => {
 
 // Update user by ID
 const updateUser = async (req, res) => {
-    // Validate input
-    const { error } = updateUserSchema.validate(req.body, { stripUnknown: true });
+    // Validate input and strip unknown fields
+    const { value: updates, error } = updateUserSchema.validate(req.body, { stripUnknown: true });
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
     try {
-        const updates = req.body;
-        if (updates.password) delete updates.password;
-        if (updates.email) delete updates.email;
-
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ message: 'User not found.' });
 
