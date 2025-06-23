@@ -58,7 +58,8 @@ const getVideoList = async (req, res) => {
                 _id: video._id,
                 url: fileExists ? `${process.env.BACKEND_URL}${video.thumbnailUrl}` : null,
                 thumbnailUrl: fileExists ? video.thumbnailUrl : null,
-                title: video.originalName || video.fileName
+                title: video.originalName || video.fileName,
+                isFavorite: video.isFavorite || false,
             };
         });
 
