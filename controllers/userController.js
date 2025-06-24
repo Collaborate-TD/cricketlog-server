@@ -2,11 +2,12 @@ import User from '../models/User.js';
 import { USER_ROLES } from '../constants/userRoles.js';
 import { updateUserSchema } from '../validation/userValidation.js';
 import { saveProfilePhoto } from '../utils/src/profilePhotoHandler.js';
+import jwt from 'jsonwebtoken';
 
 // Get single user by ID
 const getUserDetails = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id).select('-password');
+        const user = await User.findById(req.params.id).select(['-password', '-relation']);
         if (!user) return res.status(404).json({ message: 'User not found.' });
 
         res.status(200).json(user);
@@ -26,7 +27,7 @@ const getUserList = async (req, res) => {
             filters.role = filters.role;
         }
 
-        const users = await User.find(filters).select('-password');
+        const users = await User.find(filters).select(['-password', '-relation']);
         res.status(200).json(users);
     } catch (err) {
         console.error('Get Users Error:', err);
@@ -70,11 +71,41 @@ const updateUser = async (req, res) => {
             req.params.id,
             updates,
             { new: true, runValidators: true }
-        ).select('-password');
+        ).select(['-password', '-relation']);
 
         if (!updatedUser) return res.status(404).json({ message: 'User not found.' });
 
-        res.status(200).json({ message: 'User updated successfully.', user: updatedUser });
+        const profilePhotoUrl = updatedUser.profilePhoto
+            ? `${process.env.BACKEND_URL}/data/profile/${updatedUser._id}/${updatedUser.profilePhoto}`
+            : null;
+
+        const token = jwt.sign(
+            {
+                id: updatedUser._id,
+                userName: updatedUser.userName,
+                firstName: updatedUser.firstName,
+                lastName: updatedUser.lastName,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                profilePhoto: profilePhotoUrl
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRY }
+        );
+
+        res.status(200).json({
+            message: 'User updated successfully.',
+            user: {
+                id: updatedUser._id,
+                userName: updatedUser.userName,
+                firstName: updatedUser.firstName,
+                lastName: updatedUser.lastName,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                profilePhoto: profilePhotoUrl
+            },
+            token
+        });
     } catch (err) {
         console.error('Update User Error:', err);
         res.status(500).json({ message: 'Server error while updating user.' });

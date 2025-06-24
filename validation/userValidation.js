@@ -5,5 +5,5 @@ export const updateUserSchema = Joi.object({
     firstName: Joi.string(),
     lastName: Joi.string(),
     role: Joi.string(),
-    profilePhoto: Joi.any().optional().default(null)
+    profilePhoto: Joi.any().optional().empty(null).empty('')
 });

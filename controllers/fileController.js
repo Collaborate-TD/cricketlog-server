@@ -10,7 +10,7 @@ const fileUpload = async (req, res) => {
         const results = req.files.map(file => ({
             originalName: file.originalname,
             fileName: file.filename,
-            tempPath: path.join('/data/temp', file.filename),
+            path: `${process.env.BACKEND_URL}/data/temp/${file.filename}`,
             size: file.size,
             uploadedAt: new Date()
         }));
