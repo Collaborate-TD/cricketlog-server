@@ -1,11 +1,13 @@
 import User from '../models/User.js';
 import { USER_ROLES } from '../constants/userRoles.js';
 import { updateUserSchema } from '../validation/userValidation.js';
+import { saveProfilePhoto } from '../utils/src/profilePhotoHandler.js';
+import jwt from 'jsonwebtoken';
 
 // Get single user by ID
 const getUserDetails = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id).select('-password');
+        const user = await User.findById(req.params.id).select(['-password', '-relation']);
         if (!user) return res.status(404).json({ message: 'User not found.' });
 
         res.status(200).json(user);
@@ -25,7 +27,7 @@ const getUserList = async (req, res) => {
             filters.role = filters.role;
         }
 
-        const users = await User.find(filters).select('-password');
+        const users = await User.find(filters).select(['-password', '-relation']);
         res.status(200).json(users);
     } catch (err) {
         console.error('Get Users Error:', err);
@@ -35,15 +37,14 @@ const getUserList = async (req, res) => {
 
 // Update user by ID
 const updateUser = async (req, res) => {
-    // Validate input
-    const { error } = updateUserSchema.validate(req.body, { stripUnknown: true });
+    // Validate input and strip unknown fields
+    const { value: updates, error } = updateUserSchema.validate(req.body, { stripUnknown: true });
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
     try {
-        const updates = req.body;
-        if (updates.password) delete updates.password;
-        if (updates.email) delete updates.email;
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: 'User not found.' });
 
         // Check for unique username
         if (updates.userName) {
@@ -57,15 +58,54 @@ const updateUser = async (req, res) => {
             }
         }
 
+        if (updates.profilePhoto) {
+            const profilePhoto = saveProfilePhoto({
+                filename: updates.profilePhoto,
+                userId: req.params.id,
+                username: user.userName
+            });
+            updates.profilePhoto = profilePhoto;
+        }
+
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
             updates,
             { new: true, runValidators: true }
-        ).select('-password');
+        ).select(['-password', '-relation']);
 
         if (!updatedUser) return res.status(404).json({ message: 'User not found.' });
 
-        res.status(200).json({ message: 'User updated successfully.', user: updatedUser });
+        const profilePhotoUrl = updatedUser.profilePhoto
+            ? `${process.env.BACKEND_URL}/data/profile/${updatedUser._id}/${updatedUser.profilePhoto}`
+            : null;
+
+        const token = jwt.sign(
+            {
+                id: updatedUser._id,
+                userName: updatedUser.userName,
+                firstName: updatedUser.firstName,
+                lastName: updatedUser.lastName,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                profilePhoto: profilePhotoUrl
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRY }
+        );
+
+        res.status(200).json({
+            message: 'User updated successfully.',
+            user: {
+                id: updatedUser._id,
+                userName: updatedUser.userName,
+                firstName: updatedUser.firstName,
+                lastName: updatedUser.lastName,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                profilePhoto: profilePhotoUrl
+            },
+            token
+        });
     } catch (err) {
         console.error('Update User Error:', err);
         res.status(500).json({ message: 'Server error while updating user.' });
@@ -156,7 +196,7 @@ const getUnmatchedUsers = async (req, res) => {
             const rel = user.relation.find(r => r.userId.toString() === u._id.toString());
             const userObj = u.toObject();
             userObj.userId = userObj._id;
-            delete userObj._id;
+
             return {
                 ...userObj,
                 requestType: rel ? rel.requestType : null,

@@ -14,6 +14,7 @@ const videoSchema = new mongoose.Schema({
     originalName: { type: String, required: true },
     fileName: { type: String, required: true },
     size: { type: Number, required: true },
+    isFavourite: { type: Boolean, default: false },
     feedback: { type: [feedbackSchema], default: [] },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
