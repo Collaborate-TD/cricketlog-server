@@ -13,7 +13,7 @@ const getVideoList = async (req, res) => {
     }
 
     try {
-        const { userId } = req.body.params;
+        const { userId, ...param } = req.body.params;
 
         // Get user and their role
         const user = await User.findById(userId);
@@ -22,7 +22,6 @@ const getVideoList = async (req, res) => {
         }
 
         let userIds = [];
-        const param = {};
         if (user.role === 'coach') {
             if (req.body.params.studentId) {
                 // If studentId is provided, fetch only that student's videos
@@ -59,7 +58,7 @@ const getVideoList = async (req, res) => {
                 url: fileExists ? `${process.env.BACKEND_URL}${video.thumbnailUrl}` : null,
                 thumbnailUrl: fileExists ? video.thumbnailUrl : null,
                 title: video.originalName || video.fileName,
-                isFavorite: video.isFavorite || false,
+                isFavourite: video.isFavourite || false,
             };
         });
 
