@@ -10,3 +10,7 @@ export const getVideoListSchema = Joi.object({
 export const updateVideoSchema = Joi.object({
     isFavourite: Joi.boolean().optional()
 });
+
+export const deleteVideosSchema = Joi.object({
+    ids: Joi.array().items(Joi.string()).min(1).required()
+});

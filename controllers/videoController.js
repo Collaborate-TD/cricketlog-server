@@ -2,8 +2,9 @@ import User from '../models/User.js';
 import Video from '../models/Video.js';
 import path from 'path';
 import fs from 'fs';
-import { getVideoListSchema, updateVideoSchema } from '../validation/videoValidation.js';
+import { deleteVideosSchema, getVideoListSchema, updateVideoSchema } from '../validation/videoValidation.js';
 import generateRandomString from '../utils/src/generateRandomString.js';
+import Joi from 'joi';
 
 // Get list of all videos
 const getVideoList = async (req, res) => {
@@ -154,8 +155,46 @@ const editDetails = async (req, res) => {
     }
 };
 
+// Delete videos by IDs
+const deleteVideos = async (req, res) => {
+    const { error } = deleteVideosSchema.validate(req.body, { stripUnknown: true });
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+    const { ids } = req.body;
+
+    try {
+        // Find videos to delete (to remove files from disk)
+        const videos = []
+        // await Video.find({ _id: { $in: ids } });
+
+        // Delete video files from disk
+        for (const video of videos) {
+            const filePath = path.join('data', 'videos', video.userId.toString(), 'raw', video.fileName);
+            if (fs.existsSync(filePath)) {
+                try {
+                    fs.unlinkSync(filePath);
+                } catch (err) {
+                    console.warn(`Failed to delete file: ${filePath}`, err);
+                }
+            }
+        }
+
+        // Delete from DB
+        const result = await Video.deleteMany({ _id: { $in: ids } });
+
+        res.status(200).json({ message: 'Videos deleted', deletedCount: result.deletedCount });
+    } catch (err) {
+        console.error('Delete Videos Error:', err);
+        res.status(500).json({ message: 'Server error while deleting videos.' });
+    }
+};
+
+
+
 export {
     getVideoList,
     uploadVideo,
-    editDetails
+    editDetails,
+    deleteVideos
 };
