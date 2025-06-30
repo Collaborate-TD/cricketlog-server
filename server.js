@@ -7,6 +7,7 @@ import userRoutes from './routes/userRoutes.js';
 import relationRoutes from './routes/relationRoutes.js';
 import fileRoutes from './routes/fileRoutes.js';
 import videoRoutes from './routes/videoRoutes.js';
+import annotationRoutes from './routes/annotationRoutes.js';
 import path from 'path';
 
 dotenv.config(); // Load environment variables
@@ -27,6 +28,8 @@ app.use("/user", userRoutes);
 app.use("/relation", relationRoutes);
 app.use("/file", fileRoutes);
 app.use("/video", videoRoutes);
+app.use("/video-ann", annotationRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

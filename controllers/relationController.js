@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import { RELATION_STATUS, REQUEST_TYPES } from '../constants/relationStatus.js';
 import { requestRelationSchema, approveDeclineRelationSchema } from '../validation/relationValidation.js';
+import Video from '../models/Video.js';
 
 // Send a relation request (student to coach or coach to student)
 export const requestRelation = async (req, res) => {
@@ -67,8 +68,42 @@ export const handleRelationAction = async (req, res) => {
     const { approverId, requesterId, action, feedback } = req.body;
 
     try {
-        // Only allow if approver has a 'received' request from requester
         const approver = await User.findById(approverId);
+
+        // If action is 'removed', handle removal logic
+        if (action === 'removed') {
+            // Allow either user to remove an approved relation
+            const relation = approver.relation.find(
+                rel => rel.userId.toString() === requesterId &&
+                    rel.status === RELATION_STATUS.APPROVED
+            );
+            if (!relation) {
+                return res.status(403).json({ message: 'You can only remove an approved student/coach.' });
+            }
+
+            // Remove relation from both users
+            await User.updateOne(
+                { _id: approverId },
+                { $pull: { relation: { userId: requesterId } } }
+            );
+            await User.updateOne(
+                { _id: requesterId },
+                { $pull: { relation: { userId: approverId } } }
+            );
+            // Set hasAccess: false for all videos between these users
+            await Video.updateMany(
+                {
+                    $or: [
+                        { studentId: approverId, coachId: requesterId },
+                        { studentId: requesterId, coachId: approverId }
+                    ]
+                },
+                { $set: { hasAccess: false } }
+            );
+            return res.status(200).json({ message: 'Relation removed successfully.' });
+        }
+
+        // Only allow if approver has a 'received' request from requester
         const relation = approver.relation.find(
             rel => rel.userId.toString() === requesterId &&
                 rel.requestType === REQUEST_TYPES.RECEIVED &&
