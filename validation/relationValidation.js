@@ -9,6 +9,10 @@ export const requestRelationSchema = Joi.object({
 export const approveDeclineRelationSchema = Joi.object({
     approverId: Joi.string().required(),
     requesterId: Joi.string().required(),
-    action: Joi.string().valid(RELATION_STATUS.APPROVED, RELATION_STATUS.REJECTED).required(),
+    action: Joi.string().valid(
+        RELATION_STATUS.APPROVED,
+        RELATION_STATUS.REJECTED,
+        RELATION_STATUS.REMOVED
+    ).required(),
     feedback: Joi.string().allow('').optional()
 });

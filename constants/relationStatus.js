@@ -1,7 +1,8 @@
 export const RELATION_STATUS = {
     REQUESTED: 'requested',
     APPROVED: 'approved',
-    REJECTED: 'rejected'
+    REJECTED: 'rejected',
+    REMOVED: 'removed'
 };
 
 export const REQUEST_TYPES = {
