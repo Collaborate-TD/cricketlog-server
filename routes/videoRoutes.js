@@ -7,7 +7,7 @@ const router = express.Router();
 const allowedExtensions = ['.mp4', '.mov', '.avi'];
 const videoUpload = getTempMulterUpload({
     allowedExtensions,
-    maxSizeMB: 10,
+    maxSizeMB: 50,
     fieldName: 'videos',
     maxCount: 10
 });
