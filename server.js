@@ -1,5 +1,5 @@
 import express, { json } from 'express';
-import { connect } from 'mongoose';
+import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
@@ -19,9 +19,13 @@ app.use(json());
 // Serve static files
 app.use('/data', express.static(path.join(process.cwd(), 'data')));
 
-connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('MongoDB connected'))
-    .catch(err => console.error('MongoDB connection error:', err));
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  retryWrites: false // Important for Cosmos DB compatibility
+})
+.then(() => console.log('Connected to Azure Cosmos DB'))
+.catch(err => console.error('Azure Cosmos DB connection error:', err));
 
 app.use('/auth', authRoutes);
 app.use("/user", userRoutes);

@@ -5,6 +5,7 @@ import fs from 'fs';
 import { deleteVideosSchema, getVideoListSchema, updateVideoSchema, uploadVideoSchema } from '../validation/videoValidation.js';
 import generateRandomString from '../utils/src/generateRandomString.js';
 import Joi from 'joi';
+import { uploadToBlob } from '../utils/azureStorage.js';
 
 // Get list of all videos
 const getVideoList = async (req, res) => {
@@ -95,7 +96,8 @@ const uploadVideo = async (req, res) => {
             // Move file from temp to user folder
             fs.renameSync(file.path, destPath);
 
-            const url = `/data/videos/${studentId}/raw/${newFileName}`;
+            const blobName = `${studentId}/${Date.now()}-${file.originalname}`;
+            const url = await uploadToBlob('videos', blobName, file.buffer);
             const thumbnailUrl = url;
             const uploadedAt = new Date(timestamp);
 
