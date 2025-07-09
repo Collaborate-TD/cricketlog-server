@@ -1,19 +1,19 @@
 import { BlobServiceClient } from '@azure/storage-blob';
 
-// Initialize blob service client
+// Use connection string authentication instead of Microsoft Entra ID
 let blobServiceClient;
 
 try {
-  if (process.env.STORAGE_CONNECTION_STRING) {
-    blobServiceClient = BlobServiceClient.fromConnectionString(
-      process.env.STORAGE_CONNECTION_STRING
-    );
-    console.log("Azure Blob Storage client initialized successfully");
-  } else {
-    console.error("STORAGE_CONNECTION_STRING environment variable is not set");
-  }
+    if (!process.env.STORAGE_CONNECTION_STRING) {
+        console.error("STORAGE_CONNECTION_STRING environment variable is not set");
+    } else {
+        blobServiceClient = BlobServiceClient.fromConnectionString(
+            process.env.STORAGE_CONNECTION_STRING
+        );
+        console.log("Azure Blob Storage client initialized");
+    }
 } catch (error) {
-  console.error("Failed to initialize Azure Blob Storage client:", error);
+    console.error("Failed to initialize Azure Blob Storage client:", error);
 }
 
 /**

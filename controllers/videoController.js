@@ -74,7 +74,7 @@ const getVideoList = async (req, res) => {
 };
 
 // Upload video files
- const uploadVideo = async (req, res) => {
+const uploadVideo = async (req, res) => {
     // Validate request body
     const { error, value } = uploadVideoSchema.validate(req.body, { stripUnknown: true });
     if (error) {
@@ -84,33 +84,58 @@ const getVideoList = async (req, res) => {
 
     try {
         console.log('Upload request received:', req.body);
-        console.log('Files received:', req.files);
         
-        // Make sure req.files exists and has the video file
-        if (!req.files || !req.files.length) {
-          return res.status(400).json({ message: 'No video file uploaded' });
+        // Check if files were uploaded
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ message: 'No video file uploaded' });
         }
         
         const file = req.files[0];
-        console.log('File path:', file.path);
+        console.log('File received:', file.originalname);
         
-        // Create a more robust uploadToBlob function that handles buffers
-        // Instead of relying on file paths
-        const blobName = `videos/${Date.now()}-${file.originalname}`;
+        // Generate a unique blob name
+        const timestamp = Date.now();
+        const blobName = `videos/${studentId}/${timestamp}-${file.originalname}`;
         
-        // Read the file into buffer instead of relying on the path
-        const fs = await import('fs');
+        // Read file as buffer
         const fileBuffer = fs.readFileSync(file.path);
         
-        // Call uploadToBlob with the buffer instead of the path
+        // Upload to Azure Blob Storage using connection string auth
+        // (not Microsoft Entra ID which is causing the permission error)
         const blobUrl = await uploadToBlob('videos', blobName, fileBuffer);
         
-        // Rest of your function...
+        // Create a video record in the database
+        const newVideo = new Video({
+            fileName: `${timestamp}-${file.originalname}`,
+            originalName: file.originalname,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+            studentId,
+            coachId,
+            blobUrl: blobUrl, // Store the Azure blob URL
+            uploadedAt: new Date(),
+            hasAccess: true,
+            isFavourite: []
+        });
         
-      } catch (error) {
+        await newVideo.save();
+        
+        // Delete temporary file
+        fs.unlinkSync(file.path);
+        
+        res.status(201).json({
+            message: 'Video uploaded successfully',
+            video: {
+                _id: newVideo._id,
+                url: blobUrl,
+                title: file.originalname
+            }
+        });
+        
+    } catch (error) {
         console.error('Upload error:', error);
         res.status(500).json({ message: error.message });
-      }
+    }
 };
 
 // Edit video details (e.g., title, description, etc.)
