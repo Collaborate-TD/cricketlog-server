@@ -74,7 +74,7 @@ const getVideoList = async (req, res) => {
 };
 
 // Upload video files
-export const uploadVideo = async (req, res) => {
+ const uploadVideo = async (req, res) => {
     // Validate request body
     const { error, value } = uploadVideoSchema.validate(req.body, { stripUnknown: true });
     if (error) {
