@@ -22,7 +22,10 @@ app.use('/data', express.static(path.join(process.cwd(), 'data')));
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  retryWrites: false // Important for Cosmos DB compatibility
+  retryWrites: false,  // Required for Cosmos DB
+  serverSelectionTimeoutMS: 30000, // Increased timeout
+  socketTimeoutMS: 45000, // Socket timeout
+  family: 4  // Use IPv4, avoid IPv6
 })
 .then(() => console.log('Connected to Azure Cosmos DB'))
 .catch(err => console.error('Azure Cosmos DB connection error:', err));
