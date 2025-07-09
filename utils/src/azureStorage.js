@@ -58,3 +58,29 @@ export const uploadToBlob = async (containerName, blobName, filePathOrBuffer) =>
     throw error;
   }
 };
+
+/**
+ * Delete a blob from Azure Blob Storage
+ * @param {string} containerName Container name
+ * @param {string} blobName Blob name
+ * @returns {Promise<void>}
+ */
+export const deleteBlob = async (containerName, blobName) => {
+  try {
+    // Verify client is initialized
+    if (!blobServiceClient) {
+      throw new Error("Blob service client not initialized");
+    }
+    
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    
+    console.log(`Deleting blob: ${containerName}/${blobName}`);
+    await blockBlobClient.delete();
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting from Azure Blob Storage:', error);
+    throw error;
+  }
+};
