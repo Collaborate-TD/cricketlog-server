@@ -6,6 +6,30 @@ import { deleteVideosSchema, getVideoListSchema, updateVideoSchema, uploadVideoS
 import generateRandomString from '../utils/src/generateRandomString.js';
 import Joi from 'joi';
 import { uploadToBlob, deleteBlob } from '../utils/src/azureStorage.js';
+import { BlobServiceClient, StorageSharedKeyCredential } from "@azure/storage-blob";
+
+// Function to generate SAS URL
+const generateSasUrl = async (containerName, blobName) => {
+  const account = "cricketvideos";
+  const accountKey = process.env.STORAGE_ACCOUNT_KEY;
+  
+  const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
+  const blobServiceClient = new BlobServiceClient(
+    `https://${account}.blob.core.windows.net`,
+    sharedKeyCredential
+  );
+  
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  const blobClient = containerClient.getBlobClient(blobName);
+  
+  // Generate SAS token that expires in 1 hour
+  const sasToken = await blobClient.generateSasUrl({
+    permissions: "r", // Read permission
+    expiresOn: new Date(new Date().valueOf() + 3600 * 1000), // 1 hour
+  });
+  
+  return sasToken;
+};
 
 // Get list of all videos
 const getVideoList = async (req, res) => {
@@ -59,17 +83,22 @@ const getVideoList = async (req, res) => {
             fileName: v.fileName
         })));
 
-        const list = videos.map(video => {
+        const list = await Promise.all(videos.map(async (video) => {
+            // Extract blob name from URL
+            const blobName = video.fileName;
+            // Generate SAS URL with temporary access
+            const sasUrl = await generateSasUrl('videos', `${video.studentId}/${blobName}`);
+            
             return {
                 _id: video._id,
-                url: video.blobUrl || null,  // Use blobUrl field directly
+                url: sasUrl,
                 thumbnailUrl: video.blobUrl || null,
                 title: video.originalName || video.fileName,
                 isFavourite: video.isFavourite.includes(userId),
                 studentId: video.studentId,
                 coachId: video.coachId,
             };
-        });
+        }));
 
         console.log("Processed list URLs:", list.map(v => v.url));
         
