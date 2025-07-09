@@ -89,30 +89,32 @@ const uploadVideo = async (req, res) => {
         
         // Generate a unique blob name
         const timestamp = Date.now();
-        const blobName = `videos/${studentId}/${timestamp}-${file.originalname}`;
+        const blobName = `${studentId}/${timestamp}-${file.originalname}`; // FIXED: Removed extra 'videos/' prefix
         
-        // Read file as buffer (if needed)
+        // Read file as buffer
         const fs = await import('fs');
         const fileBuffer = fs.readFileSync(file.path);
         
         // Upload to Azure Blob Storage
         const blobUrl = await uploadToBlob('videos', blobName, fileBuffer);
+        console.log('Video uploaded to Azure, URL:', blobUrl); // ADDED: Debug log
         
-        // Create a video record in the database with the correct field name (size instead of fileSize)
+        // Create video record with correct blobUrl
         const newVideo = new Video({
             fileName: `${timestamp}-${file.originalname}`,
             originalName: file.originalname,
-            size: file.size, // THIS IS THE FIX - using size instead of fileSize
+            size: file.size,
             mimeType: file.mimetype,
             studentId,
             coachId,
-            blobUrl: blobUrl,
+            blobUrl: blobUrl, // Store the Azure blob URL
             uploadedAt: new Date(),
             hasAccess: true,
             isFavourite: []
         });
         
-        await newVideo.save();
+        const savedVideo = await newVideo.save();
+        console.log('Video saved to database with ID:', savedVideo._id);
         
         // Delete temporary file
         fs.unlinkSync(file.path);
@@ -120,12 +122,11 @@ const uploadVideo = async (req, res) => {
         res.status(201).json({
             message: 'Video uploaded successfully',
             video: {
-                _id: newVideo._id,
-                url: blobUrl,
+                _id: savedVideo._id,
+                url: blobUrl, // Make sure this is passed to frontend
                 title: file.originalname
             }
         });
-        
     } catch (error) {
         console.error('Upload error:', error);
         res.status(500).json({ message: error.message });
