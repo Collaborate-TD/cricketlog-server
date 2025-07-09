@@ -1,12 +1,5 @@
 import mongoose from 'mongoose';
 
-const feedbackSchema = new mongoose.Schema({
-    frameNo: { type: Number, required: true },
-    data: { type: Object, required: true },
-    comment: { type: String },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
-}, { _id: false });
 
 const videoSchema = new mongoose.Schema({
     studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -17,7 +10,7 @@ const videoSchema = new mongoose.Schema({
     fileName: { type: String, required: true },
     size: { type: Number, required: true },
     isFavourite: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: [] }],
-    feedback: { type: [feedbackSchema], default: [] },
+    annotations: { type: Object, default: [] },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });

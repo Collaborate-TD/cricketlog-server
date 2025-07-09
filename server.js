@@ -7,7 +7,8 @@ import userRoutes from './routes/userRoutes.js';
 import relationRoutes from './routes/relationRoutes.js';
 import fileRoutes from './routes/fileRoutes.js';
 import videoRoutes from './routes/videoRoutes.js';
-import annotationRoutes from './routes/annotationRoutes.js';
+import annotateRoutes from './routes/annotateRoutes.js';
+import drillRoutes from './routes/drillRoutes.js';
 import path from 'path';
 
 dotenv.config(); // Load environment variables
@@ -28,7 +29,8 @@ app.use("/user", userRoutes);
 app.use("/relation", relationRoutes);
 app.use("/file", fileRoutes);
 app.use("/video", videoRoutes);
-app.use("/video-ann", annotationRoutes);
+app.use("/video-ann", annotateRoutes);
+app.use("/drill", drillRoutes);
 
 
 const PORT = process.env.PORT || 5000;
