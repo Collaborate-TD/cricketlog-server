@@ -45,12 +45,12 @@ const generateSasUrl = async (containerName, blobName) => {
 
 // Get list of all videos
 const getVideoList = async (req, res) => {
-    const { error } = getVideoListSchema.validate(req.body, { stripUnknown: true });
-    if (error) {
-        return res.status(400).json({ message: error.details[0].message });
-    }
-
     try {
+        const { error } = getVideoListSchema.validate(req.body, { stripUnknown: true });
+        if (error) {
+            return res.status(400).json({ message: error.details[0].message });
+        }
+
         const { userId, studentId, coachId } = req.body.params;
 
         // Get user and their role
@@ -96,10 +96,14 @@ const getVideoList = async (req, res) => {
         })));
 
         const list = videos.map(video => {
+            // Ensure studentId is a string
+            const studentId = typeof video.studentId === 'object' 
+                ? video.studentId._id.toString() 
+                : video.studentId.toString();
+                
             return {
                 _id: video._id,
-                // Use the stored blobUrl directly instead of trying to generate SAS URL
-                url: video.blobUrl,
+                url: video.blobUrl || `https://cricketvideos.blob.core.windows.net/videos/${studentId}/${video.fileName}`,
                 thumbnailUrl: video.blobUrl || null,
                 title: video.originalName || video.fileName,
                 isFavourite: video.isFavourite.includes(userId),
@@ -120,8 +124,10 @@ const getVideoList = async (req, res) => {
 // Upload video files
 const uploadVideo = async (req, res) => {
     try {
-        console.log('Upload request received:', req.body);
         const { studentId, coachId } = req.body;
+        
+        // Make sure studentId is a string, not an object
+        const studentIdStr = typeof studentId === 'object' ? studentId._id || studentId.id : studentId;
         
         if (!req.files || req.files.length === 0) {
             return res.status(400).json({ message: 'No video file uploaded' });
@@ -130,9 +136,9 @@ const uploadVideo = async (req, res) => {
         const file = req.files[0];
         console.log('File received:', file.originalname);
         
-        // Generate a unique blob name
+        // Generate a unique blob name with proper path format
         const timestamp = Date.now();
-        const blobName = `${studentId}/${timestamp}-${file.originalname}`; // FIXED: Removed extra 'videos/' prefix
+        const blobName = `${studentIdStr}/${timestamp}-${file.originalname}`;
         
         // Read file as buffer
         const fs = await import('fs');
