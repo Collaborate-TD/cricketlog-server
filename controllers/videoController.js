@@ -52,12 +52,18 @@ const getVideoList = async (req, res) => {
             .populate('studentId', 'name email')
             .exec();
 
+        // Add debug logging
+        console.log("Raw videos from DB:", videos.map(v => ({
+            id: v._id,
+            blobUrl: v.blobUrl,
+            fileName: v.fileName
+        })));
+
         const list = videos.map(video => {
-            // Use the blobUrl stored during upload
             return {
                 _id: video._id,
-                url: video.blobUrl || null,  // Use the Azure blob URL
-                thumbnailUrl: video.blobUrl || null, // For now use same URL, later you can create thumbnails
+                url: video.blobUrl || null,  // Use blobUrl field directly
+                thumbnailUrl: video.blobUrl || null,
                 title: video.originalName || video.fileName,
                 isFavourite: video.isFavourite.includes(userId),
                 studentId: video.studentId,
@@ -65,9 +71,9 @@ const getVideoList = async (req, res) => {
             };
         });
 
-        console.log("Video URLs being sent to frontend:", videos.map(v => v.blobUrl));
-
-        res.status(200).json({ list });
+        console.log("Processed list URLs:", list.map(v => v.url));
+        
+        return res.status(200).json({ list });
     } catch (err) {
         console.error('Get Video List Error:', err);
         res.status(500).json({ message: 'Server error while fetching videos.' });
