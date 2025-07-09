@@ -136,9 +136,9 @@ const uploadVideo = async (req, res) => {
         const file = req.files[0];
         console.log('File received:', file.originalname);
         
-        // Generate a unique blob name with proper path format - REMOVE THE EXTRA "videos/"
+        // Generate a unique blob name
         const timestamp = Date.now();
-        const blobName = `${studentIdStr}/${timestamp}-${file.originalname}`;
+        const blobName = `${studentId}/${timestamp}-${file.originalname}`;
         
         // Read file as buffer
         const fs = await import('fs');
@@ -146,9 +146,11 @@ const uploadVideo = async (req, res) => {
         
         // Upload to Azure Blob Storage
         const blobUrl = await uploadToBlob('videos', blobName, fileBuffer);
-        console.log('Video uploaded to Azure, URL:', blobUrl); // ADDED: Debug log
         
-        // Create video record with correct blobUrl
+        // IMPORTANT: Modify the URL to match the actual path with double videos/
+        const correctedBlobUrl = blobUrl.replace('/videos/', '/videos/videos/');
+        
+        // Create video record with correct URL
         const newVideo = new Video({
             fileName: `${timestamp}-${file.originalname}`,
             originalName: file.originalname,
@@ -156,7 +158,7 @@ const uploadVideo = async (req, res) => {
             mimeType: file.mimetype,
             studentId,
             coachId,
-            blobUrl: blobUrl, // Store the Azure blob URL
+            blobUrl: correctedBlobUrl,
             uploadedAt: new Date(),
             hasAccess: true,
             isFavourite: []
@@ -172,7 +174,7 @@ const uploadVideo = async (req, res) => {
             message: 'Video uploaded successfully',
             video: {
                 _id: savedVideo._id,
-                url: blobUrl, // Make sure this is passed to frontend
+                url: correctedBlobUrl, // Make sure this is passed to frontend
                 title: file.originalname
             }
         });
