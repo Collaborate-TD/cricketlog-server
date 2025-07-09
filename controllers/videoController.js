@@ -95,22 +95,18 @@ const getVideoList = async (req, res) => {
             fileName: v.fileName
         })));
 
-        const list = await Promise.all(videos.map(async (video) => {
-            // Extract blob name from URL
-            const blobName = video.fileName;
-            // Generate SAS URL with temporary access
-            const sasUrl = await generateSasUrl('videos', `${video.studentId}/${blobName}`);
-            
+        const list = videos.map(video => {
             return {
                 _id: video._id,
-                url: sasUrl,
+                // Use the stored blobUrl directly instead of trying to generate SAS URL
+                url: video.blobUrl,
                 thumbnailUrl: video.blobUrl || null,
                 title: video.originalName || video.fileName,
                 isFavourite: video.isFavourite.includes(userId),
                 studentId: video.studentId,
                 coachId: video.coachId,
             };
-        }));
+        });
 
         console.log("Processed list URLs:", list.map(v => v.url));
         
