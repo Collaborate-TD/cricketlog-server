@@ -5,7 +5,7 @@ import fs from 'fs';
 import { deleteVideosSchema, getVideoListSchema, updateVideoSchema, uploadVideoSchema } from '../validation/videoValidation.js';
 import generateRandomString from '../utils/src/generateRandomString.js';
 import Joi from 'joi';
-import { uploadToBlob } from '../utils/src/azureStorage.js';
+import { uploadToBlob, deleteBlob } from '../utils/src/azureStorage.js';
 
 // Get list of all videos
 const getVideoList = async (req, res) => {
@@ -53,12 +53,11 @@ const getVideoList = async (req, res) => {
             .exec();
 
         const list = videos.map(video => {
-            const filePath = path.join('data', 'videos', video.studentId.toString(), 'raw', video.fileName);
-            const fileExists = fs.existsSync(filePath);
+            // Use the blobUrl stored during upload
             return {
                 _id: video._id,
-                url: fileExists ? `${process.env.BACKEND_URL}${video.thumbnailUrl}` : null,
-                thumbnailUrl: fileExists ? video.thumbnailUrl : null,
+                url: video.blobUrl || null,  // Use the Azure blob URL
+                thumbnailUrl: video.blobUrl || null, // For now use same URL, later you can create thumbnails
                 title: video.originalName || video.fileName,
                 isFavourite: video.isFavourite.includes(userId),
                 studentId: video.studentId,
@@ -206,6 +205,20 @@ const deleteVideos = async (req, res) => {
                         fs.unlinkSync(filePath);
                     } catch (err) {
                         console.warn(`Failed to delete file: ${filePath}`, err);
+                    }
+                }
+
+                // Delete from Azure Blob Storage if blobUrl exists
+                if (video.blobUrl) {
+                    try {
+                        // Extract blob name from URL
+                        const url = new URL(video.blobUrl);
+                        const blobPath = url.pathname.substring(1); // Remove leading '/'
+                        
+                        // Delete the blob
+                        await deleteBlob('videos', blobPath);
+                    } catch (err) {
+                        console.warn(`Failed to delete blob for video ${video._id}`, err);
                     }
                 }
             }
