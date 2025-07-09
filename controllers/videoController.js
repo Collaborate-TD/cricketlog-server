@@ -126,7 +126,7 @@ const uploadVideo = async (req, res) => {
     try {
         const { studentId, coachId } = req.body;
         
-        // Make sure studentId is a string, not an object
+        // Make sure studentId is a string
         const studentIdStr = typeof studentId === 'object' ? studentId._id || studentId.id : studentId;
         
         if (!req.files || req.files.length === 0) {
@@ -136,7 +136,7 @@ const uploadVideo = async (req, res) => {
         const file = req.files[0];
         console.log('File received:', file.originalname);
         
-        // Generate a unique blob name with proper path format
+        // Generate a unique blob name with proper path format - REMOVE THE EXTRA "videos/"
         const timestamp = Date.now();
         const blobName = `${studentIdStr}/${timestamp}-${file.originalname}`;
         
