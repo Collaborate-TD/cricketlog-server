@@ -48,7 +48,7 @@ const getVideoList = async (req, res) => {
 
         //  const videos = await Video.find(filter).sort({ createdAt: -1 });
         const videos = await Video.find({ studentId: userId })
-            .sort({ createdAt: -1 })
+            .sort({ _id: -1 }) // _id contains a timestamp, so sorting by it is similar to createdAt
             .populate('studentId', 'name email')
             .exec();
 
@@ -75,17 +75,10 @@ const getVideoList = async (req, res) => {
 
 // Upload video files
 const uploadVideo = async (req, res) => {
-    // Validate request body
-    const { error, value } = uploadVideoSchema.validate(req.body, { stripUnknown: true });
-    if (error) {
-        return res.status(400).json({ message: error.details[0].message });
-    }
-    const { studentId, coachId } = value;
-
     try {
         console.log('Upload request received:', req.body);
+        const { studentId, coachId } = req.body;
         
-        // Check if files were uploaded
         if (!req.files || req.files.length === 0) {
             return res.status(400).json({ message: 'No video file uploaded' });
         }
@@ -97,22 +90,22 @@ const uploadVideo = async (req, res) => {
         const timestamp = Date.now();
         const blobName = `videos/${studentId}/${timestamp}-${file.originalname}`;
         
-        // Read file as buffer
+        // Read file as buffer (if needed)
+        const fs = await import('fs');
         const fileBuffer = fs.readFileSync(file.path);
         
-        // Upload to Azure Blob Storage using connection string auth
-        // (not Microsoft Entra ID which is causing the permission error)
+        // Upload to Azure Blob Storage
         const blobUrl = await uploadToBlob('videos', blobName, fileBuffer);
         
-        // Create a video record in the database
+        // Create a video record in the database with the correct field name (size instead of fileSize)
         const newVideo = new Video({
             fileName: `${timestamp}-${file.originalname}`,
             originalName: file.originalname,
-            fileSize: file.size,
+            size: file.size, // THIS IS THE FIX - using size instead of fileSize
             mimeType: file.mimetype,
             studentId,
             coachId,
-            blobUrl: blobUrl, // Store the Azure blob URL
+            blobUrl: blobUrl,
             uploadedAt: new Date(),
             hasAccess: true,
             isFavourite: []
