@@ -17,7 +17,8 @@ const videoSchema = new mongoose.Schema({
     isFavourite: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: [] }],
     annotations: { type: [annotationSchema], default: [] },
     createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
+    updatedAt: { type: Date, default: Date.now },
+    blobUrl: {type: String}
 });
 
 export default mongoose.model('Video', videoSchema);
