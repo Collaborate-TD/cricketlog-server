@@ -46,7 +46,7 @@ const getVideoList = async (req, res) => {
             return res.status(403).json({ message: 'You are not authorized to view these videos or invalid role.' });
         }
 
-        const videos = await Video.find(filter).sort({ createdAt: -1 });
+        // const videos = await Video.find(filter).sort({ createdAt: -1 });
 
         const list = videos.map(video => {
             const filePath = path.join('data', 'videos', video.studentId.toString(), 'raw', video.fileName);
@@ -82,6 +82,9 @@ const uploadVideo = async (req, res) => {
         return res.status(400).json({ message: 'No files uploaded' });
     }
 
+    console.log('Upload request received:', req.body);
+    console.log('Files received:', req.files);
+
     try {
         const results = [];
         for (const file of req.files) {
@@ -97,6 +100,8 @@ const uploadVideo = async (req, res) => {
             fs.renameSync(file.path, destPath);
 
             const blobName = `${studentId}/${Date.now()}-${file.originalname}`;
+            console.log('File path:', file.path);
+            console.log('File exists:', fs.existsSync(file.path));
             const url = await uploadToBlob('videos', blobName, file.buffer);
             const thumbnailUrl = url;
             const uploadedAt = new Date(timestamp);

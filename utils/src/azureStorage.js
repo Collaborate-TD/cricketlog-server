@@ -1,53 +1,55 @@
 import { BlobServiceClient } from '@azure/storage-blob';
 import fs from 'fs';
 
-// Initialize blob service client from connection string
-const blobServiceClient = BlobServiceClient.fromConnectionString(
-  process.env.STORAGE_CONNECTION_STRING
-);
+// Initialize blob service client
+let blobServiceClient;
+
+// Initialize with better error handling
+try {
+  if (process.env.STORAGE_CONNECTION_STRING) {
+    blobServiceClient = BlobServiceClient.fromConnectionString(
+      process.env.STORAGE_CONNECTION_STRING
+    );
+    console.log("Azure Blob Storage client initialized successfully");
+  } else {
+    console.error("STORAGE_CONNECTION_STRING environment variable is not set");
+  }
+} catch (error) {
+  console.error("Failed to initialize Azure Blob Storage client:", error);
+}
 
 /**
  * Upload a file to Azure Blob Storage
- * @param {string} containerName - Name of the container (e.g., 'videos')
- * @param {string} blobName - Name to give the blob (e.g., 'user123/video1.mp4')
- * @param {string|Buffer} filePathOrBuffer - File path or buffer to upload
- * @returns {Promise<string>} URL of the uploaded blob
  */
-export const uploadToBlob = async (containerName, blobName, filePathOrBuffer) => {
+export const uploadToBlob = async (containerName, blobName, filePath) => {
   try {
+    // Verify client is initialized
+    if (!blobServiceClient) {
+      throw new Error("Blob service client not initialized");
+    }
+    
+    // Get container client
     const containerClient = blobServiceClient.getContainerClient(containerName);
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
     
-    // Handle both file paths and buffers
-    let data;
-    if (typeof filePathOrBuffer === 'string') {
-      // It's a file path
-      data = fs.readFileSync(filePathOrBuffer);
-    } else {
-      // It's already a buffer
-      data = filePathOrBuffer;
+    // Verify file exists
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`File not found: ${filePath}`);
     }
     
-    await blockBlobClient.upload(data, data.length);
+    // Read file with error handling
+    const data = fs.readFileSync(filePath);
+    if (!data || !data.length) {
+      throw new Error(`File is empty or could not be read: ${filePath}`);
+    }
+    
+    // Upload file
+    console.log(`Uploading file ${filePath} to ${containerName}/${blobName}`);
+    const uploadResponse = await blockBlobClient.upload(data, data.length);
+    
     return blockBlobClient.url;
   } catch (error) {
     console.error('Error uploading to Azure Blob Storage:', error);
-    throw error;
-  }
-};
-
-/**
- * Delete a blob from Azure Blob Storage
- * @param {string} containerName - Name of the container
- * @param {string} blobName - Name of the blob to delete
- */
-export const deleteBlob = async (containerName, blobName) => {
-  try {
-    const containerClient = blobServiceClient.getContainerClient(containerName);
-    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-    await blockBlobClient.delete();
-  } catch (error) {
-    console.error('Error deleting from Azure Blob Storage:', error);
     throw error;
   }
 };
