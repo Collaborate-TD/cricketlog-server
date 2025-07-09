@@ -5,7 +5,7 @@ import fs from 'fs';
 import { deleteVideosSchema, getVideoListSchema, updateVideoSchema, uploadVideoSchema } from '../validation/videoValidation.js';
 import generateRandomString from '../utils/src/generateRandomString.js';
 import Joi from 'joi';
-import { uploadToBlob } from '../utils/azureStorage.js';
+import { uploadToBlob } from '../utils/src/azureStorage.js';
 
 // Get list of all videos
 const getVideoList = async (req, res) => {
