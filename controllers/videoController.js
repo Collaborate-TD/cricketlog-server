@@ -147,9 +147,9 @@ const uploadVideo = async (req, res) => {
         // Upload to Azure Blob Storage
         const blobUrl = await uploadToBlob('videos', blobName, fileBuffer);
         
-        // IMPORTANT: Modify the URL to match the actual path with double videos/
+        // Fix the URL by adding the extra videos/ segment
         const correctedBlobUrl = blobUrl.replace('/videos/', '/videos/videos/');
-        
+
         // Create video record with correct URL
         const newVideo = new Video({
             fileName: `${timestamp}-${file.originalname}`,
