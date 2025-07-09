@@ -10,25 +10,37 @@ import { BlobServiceClient, StorageSharedKeyCredential } from "@azure/storage-bl
 
 // Function to generate SAS URL
 const generateSasUrl = async (containerName, blobName) => {
-  const account = "cricketvideos";
-  const accountKey = process.env.STORAGE_ACCOUNT_KEY;
-  
-  const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
-  const blobServiceClient = new BlobServiceClient(
-    `https://${account}.blob.core.windows.net`,
-    sharedKeyCredential
-  );
-  
-  const containerClient = blobServiceClient.getContainerClient(containerName);
-  const blobClient = containerClient.getBlobClient(blobName);
-  
-  // Generate SAS token that expires in 1 hour
-  const sasToken = await blobClient.generateSasUrl({
-    permissions: "r", // Read permission
-    expiresOn: new Date(new Date().valueOf() + 3600 * 1000), // 1 hour
-  });
-  
-  return sasToken;
+  try {
+    const account = "cricketvideos";
+    const accountKey = process.env.STORAGE_ACCOUNT_KEY;
+    
+    if (!accountKey) {
+      console.error("STORAGE_ACCOUNT_KEY environment variable is not set");
+      // Fall back to direct URL if SAS can't be generated
+      return `https://${account}.blob.core.windows.net/${containerName}/${blobName}`;
+    }
+    
+    const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
+    const blobServiceClient = new BlobServiceClient(
+      `https://${account}.blob.core.windows.net`,
+      sharedKeyCredential
+    );
+    
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    const blobClient = containerClient.getBlobClient(blobName);
+    
+    // Generate SAS token that expires in 1 hour
+    const sasToken = await blobClient.generateSasUrl({
+      permissions: "r", // Read permission
+      expiresOn: new Date(new Date().valueOf() + 3600 * 1000), // 1 hour
+    });
+    
+    return sasToken;
+  } catch (error) {
+    console.error("Error generating SAS URL:", error);
+    // Fall back to direct URL
+    return `https://cricketvideos.blob.core.windows.net/${containerName}/${blobName}`;
+  }
 };
 
 // Get list of all videos
