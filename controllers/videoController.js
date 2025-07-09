@@ -65,6 +65,8 @@ const getVideoList = async (req, res) => {
             };
         });
 
+        console.log("Video URLs being sent to frontend:", videos.map(v => v.blobUrl));
+
         res.status(200).json({ list });
     } catch (err) {
         console.error('Get Video List Error:', err);
