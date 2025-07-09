@@ -15,6 +15,8 @@ export const addAnnotation = async (req, res) => {
         const video = await Video.findById(videoId);
         if (!video) return res.status(404).json({ message: 'Video not found' });
 
+        const updatedData = {};
+
         // If coachId exists, check if it matches
         if (video.coachId) {
             if (video.coachId.toString() !== coachId) {
@@ -22,15 +24,15 @@ export const addAnnotation = async (req, res) => {
             }
         } else {
             // If no coachId, assign it
-            video.coachId = coachId;
+            updatedData.coachId = coachId;
         }
 
-        const annotation = { data: JSON.stringify(data), createdAt: new Date() };
-        if (!video.annotations) video.annotations = [];
-        console.log('Received request to add annotation:', annotation);
-        video.annotations.push(annotation);
-        await video.save();
-        res.status(201).json({ message: 'Annotation added', annotation });
+        if (!data) updatedData.annotations = {};
+        updatedData.annotations = data;
+        updatedData.createdAt = new Date();
+
+        await Video.findByIdAndUpdate(videoId, updatedData, { new: true, runValidators: true });
+        res.status(201).json({ message: 'Annotation added' });
     } catch (err) {
         console.error('Error adding annotation:', err.message);
         res.status(500).json({ message: err.message });
@@ -43,11 +45,7 @@ export const getAnnotations = async (req, res) => {
     try {
         const video = await Video.findById(videoId).select('annotations');
         if (!video) return res.status(404).json({ message: 'Video not found' });
-        const annotations = video.annotations.map(a => ({
-            ...a.toObject(),
-            data: JSON.parse(a.data)
-        }));
-        res.status(200).json(annotations || []);
+        res.status(200).json(video.annotations || {});
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
