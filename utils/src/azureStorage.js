@@ -1,10 +1,8 @@
 import { BlobServiceClient } from '@azure/storage-blob';
-import fs from 'fs';
 
 // Initialize blob service client
 let blobServiceClient;
 
-// Initialize with better error handling
 try {
   if (process.env.STORAGE_CONNECTION_STRING) {
     blobServiceClient = BlobServiceClient.fromConnectionString(
@@ -20,8 +18,12 @@ try {
 
 /**
  * Upload a file to Azure Blob Storage
+ * @param {string} containerName Container name
+ * @param {string} blobName Blob name
+ * @param {Buffer|string} filePathOrBuffer File path or buffer
+ * @returns {Promise<string>} The URL of the uploaded blob
  */
-export const uploadToBlob = async (containerName, blobName, filePath) => {
+export const uploadToBlob = async (containerName, blobName, filePathOrBuffer) => {
   try {
     // Verify client is initialized
     if (!blobServiceClient) {
@@ -32,20 +34,23 @@ export const uploadToBlob = async (containerName, blobName, filePath) => {
     const containerClient = blobServiceClient.getContainerClient(containerName);
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
     
-    // Verify file exists
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`File not found: ${filePath}`);
+    // Handle both file paths and buffers
+    let data;
+    if (typeof filePathOrBuffer === 'string') {
+      // It's a file path
+      const fs = await import('fs');
+      if (!fs.existsSync(filePathOrBuffer)) {
+        throw new Error(`File not found: ${filePathOrBuffer}`);
+      }
+      data = fs.readFileSync(filePathOrBuffer);
+    } else {
+      // It's already a buffer
+      data = filePathOrBuffer;
     }
     
-    // Read file with error handling
-    const data = fs.readFileSync(filePath);
-    if (!data || !data.length) {
-      throw new Error(`File is empty or could not be read: ${filePath}`);
-    }
-    
-    // Upload file
-    console.log(`Uploading file ${filePath} to ${containerName}/${blobName}`);
-    const uploadResponse = await blockBlobClient.upload(data, data.length);
+    // Upload
+    console.log(`Uploading to ${containerName}/${blobName}`);
+    await blockBlobClient.upload(data, data.length);
     
     return blockBlobClient.url;
   } catch (error) {

@@ -46,7 +46,11 @@ const getVideoList = async (req, res) => {
             return res.status(403).json({ message: 'You are not authorized to view these videos or invalid role.' });
         }
 
-        // const videos = await Video.find(filter).sort({ createdAt: -1 });
+        //  const videos = await Video.find(filter).sort({ createdAt: -1 });
+        const videos = await Video.find({ studentId: userId })
+            .sort({ createdAt: -1 })
+            .populate('studentId', 'name email')
+            .exec();
 
         const list = videos.map(video => {
             const filePath = path.join('data', 'videos', video.studentId.toString(), 'raw', video.fileName);
@@ -70,7 +74,7 @@ const getVideoList = async (req, res) => {
 };
 
 // Upload video files
-const uploadVideo = async (req, res) => {
+export const uploadVideo = async (req, res) => {
     // Validate request body
     const { error, value } = uploadVideoSchema.validate(req.body, { stripUnknown: true });
     if (error) {
@@ -78,59 +82,35 @@ const uploadVideo = async (req, res) => {
     }
     const { studentId, coachId } = value;
 
-    if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ message: 'No files uploaded' });
-    }
-
-    console.log('Upload request received:', req.body);
-    console.log('Files received:', req.files);
-
     try {
-        const results = [];
-        for (const file of req.files) {
-            const ext = path.extname(file.originalname).toLowerCase();
-            const timestamp = Date.now();
-            const randStr = generateRandomString(6);
-            const newFileName = `video_${timestamp}_${randStr}${ext}`;
-            const userDir = path.join('data', 'videos', studentId, 'raw');
-            fs.mkdirSync(userDir, { recursive: true });
-            const destPath = path.join(userDir, newFileName);
-
-            // Move file from temp to user folder
-            fs.renameSync(file.path, destPath);
-
-            const blobName = `${studentId}/${Date.now()}-${file.originalname}`;
-            console.log('File path:', file.path);
-            console.log('File exists:', fs.existsSync(file.path));
-            const url = await uploadToBlob('videos', blobName, file.buffer);
-            const thumbnailUrl = url;
-            const uploadedAt = new Date(timestamp);
-
-            // Save to DB
-            const videoDoc = await Video.create({
-                studentId,
-                coachId,
-                thumbnailUrl,
-                originalName: file.originalname,
-                fileName: newFileName,
-                size: file.size,
-            });
-
-            results.push({
-                _id: videoDoc._id,
-                studentId,
-                coachId,
-                thumbnailUrl,
-                originalName: file.originalname,
-                size: file.size,
-                uploadedAt
-            });
+        console.log('Upload request received:', req.body);
+        console.log('Files received:', req.files);
+        
+        // Make sure req.files exists and has the video file
+        if (!req.files || !req.files.length) {
+          return res.status(400).json({ message: 'No video file uploaded' });
         }
-
-        res.status(201).json({ message: 'Files uploaded', files: results });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+        
+        const file = req.files[0];
+        console.log('File path:', file.path);
+        
+        // Create a more robust uploadToBlob function that handles buffers
+        // Instead of relying on file paths
+        const blobName = `videos/${Date.now()}-${file.originalname}`;
+        
+        // Read the file into buffer instead of relying on the path
+        const fs = await import('fs');
+        const fileBuffer = fs.readFileSync(file.path);
+        
+        // Call uploadToBlob with the buffer instead of the path
+        const blobUrl = await uploadToBlob('videos', blobName, fileBuffer);
+        
+        // Rest of your function...
+        
+      } catch (error) {
+        console.error('Upload error:', error);
+        res.status(500).json({ message: error.message });
+      }
 };
 
 // Edit video details (e.g., title, description, etc.)
