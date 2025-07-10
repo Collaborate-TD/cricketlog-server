@@ -103,7 +103,7 @@ const getVideoList = async (req, res) => {
                 
             return {
                 _id: video._id,
-                url: video.blobUrl || `https://cricketvideos.blob.core.windows.net/videos/videos/${studentId}/${video.fileName}`,
+                url: video.blobUrl || `https://cricketvideos.blob.core.windows.net/videos/${studentId}/${video.fileName}`,
                 thumbnailUrl: video.blobUrl || null,
                 title: video.originalName || video.fileName,
                 isFavourite: video.isFavourite.includes(userId),
@@ -148,7 +148,7 @@ const uploadVideo = async (req, res) => {
         const blobUrl = await uploadToBlob('videos', blobName, fileBuffer);
         
         // Fix the URL by adding the extra videos/ segment
-        const correctedBlobUrl = blobUrl.replace('/videos/', '/videos/videos/');
+        // const correctedBlobUrl = blobUrl.replace('/videos/', '/videos/videos/');
 
         // Create video record with correct URL
         const newVideo = new Video({
@@ -158,7 +158,7 @@ const uploadVideo = async (req, res) => {
             mimeType: file.mimetype,
             studentId,
             coachId,
-            blobUrl: correctedBlobUrl,
+            blobUrl: blobUrl,
             uploadedAt: new Date(),
             hasAccess: true,
             isFavourite: []
