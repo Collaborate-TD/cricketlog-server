@@ -103,7 +103,7 @@ const getVideoList = async (req, res) => {
                 
             return {
                 _id: video._id,
-                url: video.blobUrl || `https://cricketvideos.blob.core.windows.net/videos/${studentId}/${video.fileName}`,
+                url: video.blobUrl || `https://cricketvideos.blob.core.windows.net/videos/videos/${studentId}/${video.fileName}`,
                 thumbnailUrl: video.blobUrl || null,
                 title: video.originalName || video.fileName,
                 isFavourite: video.isFavourite.includes(userId),
