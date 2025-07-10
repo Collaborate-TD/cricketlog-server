@@ -127,24 +127,6 @@ Login → View Feedback → Watch Video + Comments → Review Drill Suggestions
 
 ---
 
-## 📁 Project Structure
-
-project-root/
-├── client/ - React Native Frontend
-│ ├── components/
-│ ├── screens/
-│ └── App.js
-├── server/ - Express Backend
-│ ├── routes/
-│ ├── controllers/
-│ ├── models/
-│ └── server.js
-├── uploads/ - Video & Image Storage
-├── .env
-├── README.md
-└── package.json
-
-
 ---
 
 ## 🧪 Future Enhancements
