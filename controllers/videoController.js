@@ -174,7 +174,7 @@ const uploadVideo = async (req, res) => {
             message: 'Video uploaded successfully',
             video: {
                 _id: savedVideo._id,
-                url: correctedBlobUrl, // Make sure this is passed to frontend
+                url: blobUrl, // Make sure this is passed to frontend
                 title: file.originalname
             }
         });
