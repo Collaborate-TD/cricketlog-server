@@ -25,13 +25,9 @@ try {
  */
 export const uploadToBlob = async (containerName, blobName, filePathOrBuffer) => {
   try {
-    // Verify client is initialized
-    if (!blobServiceClient) {
-      throw new Error("Blob service client not initialized");
-    }
-    
     // Get container client
     const containerClient = blobServiceClient.getContainerClient(containerName);
+    // Don't add extra path segments to blobName
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
     
     // Handle both file paths and buffers
