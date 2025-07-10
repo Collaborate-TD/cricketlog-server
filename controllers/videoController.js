@@ -95,22 +95,28 @@ const getVideoList = async (req, res) => {
             fileName: v.fileName
         })));
 
-        const list = videos.map(video => {
+        const list = await Promise.all(videos.map(async video => {
             // Ensure studentId is a string
             const studentId = typeof video.studentId === 'object' 
                 ? video.studentId._id.toString() 
                 : video.studentId.toString();
-                
+            
+            // Extract the blob name from the stored URL or construct it
+            const blobName = `${studentId}/${video.fileName}`;
+            
+            // Generate a SAS URL with temporary access
+            const videoUrl = await generateSasUrl('videos', blobName);
+            
             return {
                 _id: video._id,
-                url: video.blobUrl || `https://cricketvideos.blob.core.windows.net/videos/${studentId}/${video.fileName}`,
-                thumbnailUrl: video.blobUrl || null,
+                url: videoUrl,  // Use the SAS URL instead of direct URL
+                thumbnailUrl: null,  // Or generate a separate SAS URL for thumbnails
                 title: video.originalName || video.fileName,
                 isFavourite: video.isFavourite.includes(userId),
                 studentId: video.studentId,
                 coachId: video.coachId,
             };
-        });
+        }));
 
         console.log("Processed list URLs:", list.map(v => v.url));
         
@@ -170,11 +176,14 @@ const uploadVideo = async (req, res) => {
         // Delete temporary file
         fs.unlinkSync(file.path);
         
+        // After saving the video
+        const sasUrl = await generateSasUrl('videos', blobName);
+
         res.status(201).json({
             message: 'Video uploaded successfully',
             video: {
                 _id: savedVideo._id,
-                url: blobUrl, // Make sure this is passed to frontend
+                url: sasUrl,  // Use SAS URL instead of direct URL
                 title: file.originalname
             }
         });
