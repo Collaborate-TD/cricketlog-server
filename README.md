@@ -1,83 +1,158 @@
-# 🏏 Video Annotation Platform for Cricket Coaching
-**Empowering coaches to deliver structured, visual, and personalized feedback for better cricket performance.**
+# Cricket Coach App
+
+This project introduces a modern approach to cricket coaching by integrating mobile-based video capture, annotation tools, and feedback management into a unified digital platform.
 
 ---
 
-## 📱 Overview
+## 👥 Project Contributors
 
-The **Video Annotation Platform for Cricket Coaching** is a mobile-first application developed in collaboration with [Become Better](https://www.becomebetter.ca), designed to help cricket coaches provide efficient and effective feedback during training sessions. Coaches can record, annotate, and manage student sessions—all in one intuitive interface.
-
-> This is a **Phase 1** release focusing on manual video feedback tools. AI-powered features will follow in **Phase 2**.
-
----
-
-## 🚀 Key Features
-
-- 🔐 **Secure Login**  
-  Sign in via email or social accounts
-
-- 🧑‍🏫 **Coach Management**  
-  Manage a list of coaches and their assigned students  
-  Supports a **many-to-many relationship**:
-  - One coach can be assigned to **multiple students**
-  - One student can be trained by **multiple coaches**  
-  View and switch between coach profiles and associated student sessions
-
-- 🎯 **Student Management**  
-  Select from a list of enrolled students  
-  View student profiles and previous sessions
-
-- 🖼️ **Profile Picture Upload**  
-  Coaches and students can upload profile pictures  
-  Images are stored securely and displayed across the app interface
-
-- 📹 **Video Recording**  
-  Capture short 5-second clips during training
-  Videos by student and coach and automatically stored under student and coach sessions
-
-- 🖊️ **Annotation Tools**  
-  Pause, draw, and slow-motion tools for video feedback  
-  Add text notes, voice notes, and suggest drills
-
-- 📁 **Drill Library**  
-  Access structured cricket drills  
-  Assign specific drills based on performance issues
+- Devarsh Bharatiya  
+- Maharishi Vyas  
+- Harsh Patel  
+- Rishi Sehgal  
+- Jatinderbir Singh  
+- Mohit Gupta
 
 ---
 
-## 🔐 Authentication & Roles
+## 🎯 Background & Objectives
 
-The application supports **role-based access control** with two primary user roles:
+Traditional cricket coaching relies heavily on verbal feedback and manual observation. This project was designed to:
 
-| Role    | Access Permissions                                                                 |
-|---------|-------------------------------------------------------------------------------------|
-| Coach   | Can record videos, annotate sessions, assign drills, and manage student connections |
-| Student | Can view their session videos and coach feedback, and review assigned drills       |
-
-### 🔑 Login Flow
-
-- On login, users are authenticated and redirected to their role-specific dashboard.  
-- Role is determined based on the user document in the database.
+- Digitize critical performance moments for analysis  
+- Facilitate structured, player-specific feedback  
+- Enhance learning through visual cues and recorded insights  
+- Build a long-term, trackable coaching relationship
 
 ---
 
-## 🛠️ Tech Stack
+## 🎯 Project Scope
 
-| Area              | Technology                  |
-|-------------------|-----------------------------|
-| Frontend          | React Native (Expo)         |
-| Backend           | Node.js + Express           |
-| Database          | MongoDB + Mongoose          |
-| Storage           | Multer + Local FS (Phase 1) |
-| Design            | Miro                        |
-| Annotation Engine | Expo Camera + SVG Overlay   |
+This application represents Phase 1 of the Cricket Coach App.  
+Its current focus includes:
+
+- Manual session recording and annotation  
+- Feedback delivery via text, audio, and drills  
+- Role-based access and session tracking
+
+🔒 Not included in this phase:
+- AI-based tagging or drill recommendation  
+- Real-time motion detection or auto-feedback  
+- Cloud-based media processing
+
+These features are intended for future enhancement (Phase 2).
 
 ---
 
-## 🎓 Skills Gained by Contributors
+## 📦 Core Functionality
 
-- Full-stack app development with video/audio handling  
-- Role-based login + many-to-many data modeling  
-- Real-world UX design in a sports coaching domain  
-- REST API design & Mongoose schema modeling  
-- Preparation for AI/ML feature extension in sports tech
+| Feature                    | Description                                                                 |
+|----------------------------|-----------------------------------------------------------------------------|
+| 🎥 Video Recording         | Capture 5-second practice clips on mobile devices                           |
+| ✍️ Annotation Tools        | Draw over video, pause, and slow-motion review                              |
+| 📝 Text Feedback           | Submit written observations linked to specific clips                        |
+| 🎤 Voice Notes             | Add spoken feedback for deeper analysis                                     |
+| 🏏 Drill Recommendations   | Assign structured training drills related to recorded actions               |
+| 🖼️ Profile Picture Upload | Coaches and students can upload and view profile photos                     |
+| 🔒 Role-Based Access       | Separate dashboards and permissions for coaches and students                |
+| 🔁 Session History         | View all past coaching sessions linked to each player and coach             |
+
+---
+
+## 🔍 Use Case Highlights
+
+### 🔹 Coach Perspective
+
+- Organize practice sessions digitally  
+- Focus feedback on actual observed footage  
+- Save time by reusing annotated drills  
+- Track each player’s progress across multiple sessions  
+
+### 🔹 Student Perspective
+
+- Access constructive feedback asynchronously  
+- Visually connect errors with corrections  
+- Build a performance library to track improvement over time  
+
+---
+
+## 🧠 System Architecture Overview
+
+| Layer               | Technology                  |
+|---------------------|-----------------------------|
+| Frontend (Mobile)   | React Native + Expo         |
+| Backend             | Node.js + Express.js        |
+| Database            | MongoDB + Mongoose          |
+| File Storage        | Multer + Local FileSystem   |
+| Annotation Engine   | Expo Camera + SVG Overlay   |
+
+---
+
+## 📐 Data Model & Relationships
+
+- Coaches can work with multiple students  
+- Students can be trained by multiple coaches  
+- Each session links both sides and stores:
+  - 🎥 Video clip  
+  - ✍️ Text and 🎤 voice feedback  
+  - 🏏 Drill suggestions  
+  - ⏱ Timestamped metadata  
+
+---
+
+## 📲 Interaction Workflow
+
+### Coach  
+Login → Select Student → Record Clip → Annotate → Add Feedback → Save Session
+
+### Student  
+Login → View Feedback → Watch Video + Comments → Review Drill Suggestions
+
+---
+
+## 🧩 Deployment Instructions
+
+### Prerequisites
+
+- Node.js and npm  
+- MongoDB (local or cloud)  
+- Expo CLI  
+
+### Steps
+
+1. Clone the repository  
+2. Install dependencies (both backend and frontend)  
+3. Set up environment variables in `.env`  
+4. Start backend and frontend servers
+
+---
+
+---
+
+## 🧪 Future Enhancements
+
+- 🤖 AI-generated feedback suggestions  
+- 📈 Player performance analytics  
+- 🔗 Cloud-based storage  
+- 🧩 Drill recommendation engine  
+- 🔔 Push notifications for feedback  
+
+---
+
+## 📜 Licensing
+
+This project was developed as part of a graduate-level academic initiative at the **University of Windsor**, in collaboration with **Become Better**, an industry partner in the field of sports technology.
+
+It is intended solely for educational and evaluative purposes.  
+Commercial use, redistribution, or modification is strictly prohibited without prior written consent.
+
+© All rights reserved by **Windsor Analytics** and the University of Windsor.  
+Any external use of this project must be authorized by the project team.
+
+---
+
+## 📬 Contact
+
+**Archit Singh**  
+Cricket Coach & Founder – [Become Better](https://www.becomebetter.ca)  
+Website: [www.becomebetter.ca](https://www.becomebetter.ca)
