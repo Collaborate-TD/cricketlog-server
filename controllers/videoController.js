@@ -47,7 +47,7 @@ const getVideoList = async (req, res) => {
 
         console.log("Before update !!")
         //  const videos = await Video.find(filter).sort({ createdAt: -1 });
-        const videos = await Video.find({coachId: userId}).sort({ createdAt: -1 })
+        const videos = await Video.find({coachId: userId}).sort({ _id: -1 })
         .populate('studentId', 'name email')
         .exec();
             // .exec();
