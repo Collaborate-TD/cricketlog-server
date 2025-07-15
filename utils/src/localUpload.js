@@ -46,7 +46,10 @@ export async function getVideoUrl(subFolder) {
         return fileExists ? fileUrl : '';
     }
     else {
-        return await generateSasUrl(FOLDER_PATH.CONTAINER_PATH, subFolder);
+        console.log(`Container = ${FOLDER_PATH.CONTAINER_PATH}, folder = ${subFolder}`)
+        const url =  await generateSasUrl(FOLDER_PATH.CONTAINER_PATH, subFolder);
+        console.log("Url  = ", url)
+        return url;
     }
 }
 
