@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import generateRandomString from './generateRandomString.js';
 import { FOLDER_PATH } from '../../constants/folderPath.js';
-import { uploadToBlob } from './azureStorage.js';
+import { generateSasUrl, uploadToBlob } from './azureStorage.js';
 
 /** * Saves a profile photo for a user.
  * @param {Object} params - The parameters containing the file name, user ID, and username.
