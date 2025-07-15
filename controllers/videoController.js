@@ -47,9 +47,11 @@ const getVideoList = async (req, res) => {
 
         const videos = await Video.find(filter).sort({ createdAt: -1 });
 
-        const list = videos.map(video => {
+        // Use Promise.all to resolve all async operations in the map
+        const list = await Promise.all(videos.map(async video => {
             const filePath = path.join('data', 'videos', video.studentId.toString(), 'raw', video.fileName);
             const fileExists = fs.existsSync(filePath);
+            const student = video.studentId ? await User.findById(video.studentId) : null;
             return {
                 _id: video._id,
                 url: fileExists ? `${process.env.BACKEND_URL}${video.thumbnailUrl}` : null,
@@ -58,8 +60,9 @@ const getVideoList = async (req, res) => {
                 isFavourite: video.isFavourite.includes(userId),
                 studentId: video.studentId,
                 coachId: video.coachId,
+                studentName: student ? `${student.firstName} ${student.lastName || ""}` : 'Unknown',
             };
-        });
+        }));
 
         res.status(200).json({ list });
     } catch (err) {
