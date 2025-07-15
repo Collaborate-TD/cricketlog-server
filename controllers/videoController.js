@@ -7,7 +7,6 @@ import { deleteVideoFile, getVideoUrl, saveVideoUrl } from '../utils/src/localUp
 
 // Get list of all videos
 const getVideoList = async (req, res) => {
-    console.log("Api Hit !!");
     const { error } = getVideoListSchema.validate(req.body, { stripUnknown: true });
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
@@ -45,10 +44,8 @@ const getVideoList = async (req, res) => {
             return res.status(403).json({ message: 'You are not authorized to view these videos or invalid role.' });
         }
 
-        console.log("Before update !!")
         //  const videos = await Video.find(filter).sort({ createdAt: -1 });
         const videos = await Video.find(filter).sort({ _id: -1 })
-            // .populate('studentId', 'name email')
             .exec();
 
         // Add debug logging
