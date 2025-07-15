@@ -47,8 +47,9 @@ const getVideoList = async (req, res) => {
 
         console.log("Before update !!")
         //  const videos = await Video.find(filter).sort({ createdAt: -1 });
-        const videos = await Video.find(filter).sort({ createdAt: -1 });
-            // .populate('studentId', 'name email')
+        const videos = await Video.find({coachId: userId}).sort({ createdAt: -1 })
+        .populate('studentId', 'name email')
+        .exec();
             // .exec();
 
             console.log("After Update", videos);
@@ -56,7 +57,7 @@ const getVideoList = async (req, res) => {
         // Add debug logging
         console.log("Raw videos from DB:", videos.map(v => ({
             id: v._id,
-            blobUrl: v.blobUrl,
+            blobUrl: v.url,
             fileName: v.fileName
         })));
 
