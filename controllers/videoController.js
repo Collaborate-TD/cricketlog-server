@@ -52,7 +52,7 @@ const getVideoList = async (req, res) => {
         .exec();
             // .exec();
 
-            console.log("After Update", videos);
+            // console.log("After Update", videos);
 
         // Add debug logging
         console.log("Raw videos from DB:", videos.map(v => ({
@@ -63,21 +63,25 @@ const getVideoList = async (req, res) => {
 
         // Use Promise.all to resolve all async operations in the map
         const list = await Promise.all(videos.map(async video => {
-            const student = video.studentId ? await User.findById(video.studentId) : null;
-            const subFolder = `${video.studentId.toString()}/${video.fileName}`;
-
-            // Get the video URL from local or cloud storage else empty string
-            const url = await getVideoUrl(subFolder);
-
+            // Ensure studentId is a string
+            const studentId = typeof video.studentId === 'object' 
+                ? video.studentId._id.toString() 
+                : video.studentId.toString();
+            
+            // Extract the blob name from the stored URL or construct it
+            const blobName = `${studentId}/${video.fileName}`;
+            
+            // Generate a SAS URL with temporary access
+            const videoUrl = await generateSasUrl('videos', blobName);
+            
             return {
                 _id: video._id,
-                url: url,
-                thumbnailUrl: null,
+                url: videoUrl,  // Use the SAS URL instead of direct URL
+                thumbnailUrl: null,  // Or generate a separate SAS URL for thumbnails
                 title: video.originalName || video.fileName,
                 isFavourite: video.isFavourite.includes(userId),
                 studentId: video.studentId,
                 coachId: video.coachId,
-                studentName: student ? `${student.firstName} ${student.lastName || ""}` : 'Unknown',
             };
         }));
 
