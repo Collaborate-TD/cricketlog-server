@@ -20,13 +20,17 @@ export function getTempMulterUpload({ allowedExtensions = [], maxSizeMB = 5, fie
         storage: tempStorage,
         limits: { fileSize: MAX_SIZE },
         fileFilter: (req, file, cb) => {
-            if (allowedExtensions.length === 0) return cb(null, true);
-            const ext = path.extname(file.originalname).toLowerCase();
-            if (allowedExtensions.includes(ext)) {
-                cb(null, true);
-            } else {
-                cb(new Error(`Only ${allowedExtensions.join(', ')} files are allowed`));
+            if (allowedExtensions.length > 0) {
+                const ext = path.extname(file.originalname).toLowerCase();
+                if (!allowedExtensions.includes(ext)) {
+                    return cb(new Error(`Only ${allowedExtensions.join(', ')} files are allowed`));
+                }
             }
+            // Size filter
+            if (file.size > MAX_SIZE) {
+                return cb(new Error(`File size exceeds the maximum allowed size of ${maxSizeMB} MB`));
+            }
+            cb(null, true);
         }
     });
 

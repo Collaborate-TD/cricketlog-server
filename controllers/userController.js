@@ -27,7 +27,8 @@ const getUserList = async (req, res) => {
             filters.role = filters.role;
         }
 
-        const users = await User.find(filters).select(['-password', '-relation']);
+        const users = await User.find(filters)
+            .select(['-password', '-relation']).sort({ createdAt: -1 });
         res.status(200).json(users);
     } catch (err) {
         console.error('Get Users Error:', err);
@@ -161,9 +162,10 @@ const getMatchedUsers = async (req, res) => {
             const rel = user.relation.find(r => r.userId.toString() === u._id.toString());
             return {
                 ...u.toObject(),
-                status: rel ? rel.status : null
+                status: rel ? rel.status : null,
+                updatedAt: rel ? rel.approvedDate || rel.requestDate : null,
             };
-        });
+        }).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
         res.status(200).json(usersWithStatus);
     } catch (err) {
@@ -200,9 +202,10 @@ const getUnmatchedUsers = async (req, res) => {
             return {
                 ...userObj,
                 requestType: rel ? rel.requestType : null,
-                status: rel ? rel.status : null
+                status: rel ? rel.status : null,
+                updatedAt: rel ? rel.approvedDate || rel.requestDate : null,
             };
-        });
+        }).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
         res.status(200).json(usersWithStatus);
     } catch (err) {

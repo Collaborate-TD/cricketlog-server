@@ -154,6 +154,23 @@ export const getCoachRequests = async (req, res) => {
             }
         });
 
+        // Sort students by the requestDate of the matching relation
+        students.sort((a, b) => {
+            const relA = a.relation.find(r =>
+                r.userId.toString() === req.params.coachId &&
+                r.status === 'requested' &&
+                r.requestType === 'sent'
+            );
+            const relB = b.relation.find(r =>
+                r.userId.toString() === req.params.coachId &&
+                r.status === 'requested' &&
+                r.requestType === 'sent'
+            );
+            // If either relation is missing, treat as 0
+            if (!relA || !relB) return 0;
+            return new Date(relA.requestDate) - new Date(relB.requestDate);
+        });
+
         // Format the response for the frontend
         const requests = [];
         students.forEach(student => {
