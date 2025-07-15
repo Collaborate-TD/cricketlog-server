@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import generateRandomString from './generateRandomString.js';
 import { FOLDER_PATH } from '../../constants/folderPath.js';
-import { generateSasUrl, uploadToBlob } from './azureStorage.js';
+import { deleteBlob, generateSasUrl, uploadToBlob } from './azureStorage.js';
 
 /** * Saves a profile photo for a user.
  * @param {Object} params - The parameters containing the file name, user ID, and username.
@@ -101,7 +101,7 @@ export async function deleteVideoFile(path, blobUrl, videoId) {
                 const url = new URL(blobUrl);
                 const blobPath = url.pathname.substring(1); // Remove leading '/'
                 // Delete the blob
-                await deleteBlob('videos', blobPath);
+                await deleteBlob(FOLDER_PATH.CONTAINER_PATH, blobPath);
             }
         } catch (err) {
             console.warn(`Failed to delete blob for video ${videoId}`, err);
