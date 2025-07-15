@@ -15,7 +15,10 @@ dotenv.config(); // Load environment variables
 
 const app = express();
 app.use(cors());
-app.use(json());
+
+// For JSON bodies (e.g., application/json)
+// app.use(json());
+app.use(express.json({ limit: '100mb' }));
 
 // Serve static files
 app.use('/data', express.static(path.join(process.cwd(), 'data')));

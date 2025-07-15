@@ -11,7 +11,6 @@ export const createDrill = async (req, res) => {
     if (error) return res.status(400).json({ message: error.details[0].message });
 
     try {
-        console.log("Value= ", value);
         const { userId, fileName, isPrivate, title, desc } = value;
 
         // Move file from temp to drills folder
@@ -38,7 +37,7 @@ export const getDrills = async (req, res) => {
     if (error) return res.status(400).json({ message: error.details[0].message });
 
     try {
-        const drills = await Drill.find(filters).populate('userId', 'firstName lastName userName');
+        const drills = await Drill.find(filters).populate('userId', 'firstName lastName userName').sort({ createdAt: -1 });
         const list = drills.map(d => ({
             _id: d._id,
             userId: d.userId._id,
