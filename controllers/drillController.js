@@ -3,7 +3,7 @@ import path from 'path';
 import Drill from '../models/Drill.js';
 import User from '../models/User.js';
 import { createDrillSchema, updateDrillSchema, drillIdParamSchema, drillFilterSchema, deleteDrillsSchema } from '../validation/drillValidation.js';
-import { uploadDrillFile, deleteDrillFiles } from '../utils/src/drillUpload.js';
+import { uploadDrillFile, deleteDrillFiles } from '../utils/src/localUpload.js';
 
 // Create Drill
 export const createDrill = async (req, res) => {

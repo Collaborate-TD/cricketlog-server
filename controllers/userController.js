@@ -1,7 +1,7 @@
 import User from '../models/User.js';
 import { USER_ROLES } from '../constants/userRoles.js';
 import { updateUserSchema } from '../validation/userValidation.js';
-import { saveProfilePhoto } from '../utils/src/profilePhotoHandler.js';
+import { saveProfilePhoto } from '../utils/src/localUpload.js';
 import jwt from 'jsonwebtoken';
 
 // Get single user by ID

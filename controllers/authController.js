@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from '../validation/authValidation.js';
-import { saveProfilePhoto } from '../utils/src/profilePhotoHandler.js';
+import { saveProfilePhoto } from '../utils/src/localUpload.js';
 
 // LOGIN
 const loginUser = async (req, res) => {
