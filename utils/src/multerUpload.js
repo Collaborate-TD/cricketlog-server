@@ -7,7 +7,7 @@ export function getTempMulterUpload({ allowedExtensions = [], maxSizeMB = 5, fie
 
     const tempStorage = multer.diskStorage({
         destination: (req, file, cb) => {
-            const tempDir = process.env.NODE_ENV === "production" ? "temp" : "data/temp";
+            const tempDir = path.join('data', 'temp');
             fs.mkdirSync(tempDir, { recursive: true });
             cb(null, tempDir);
         },
