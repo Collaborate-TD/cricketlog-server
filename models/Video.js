@@ -13,7 +13,7 @@ const videoSchema = new mongoose.Schema({
     annotations: { type: Object, default: [] },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
-    url: { type: String }
+    url: { type: String, default: "" }
 });
 
 export default mongoose.model('Video', videoSchema);

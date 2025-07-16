@@ -1,5 +1,5 @@
-import path from 'path';
-
+import { getFileUrl } from '../utils/src/localUpload.js';
+import { FOLDER_PATH } from '../constants/folderPath.js';
 
 const fileUpload = async (req, res) => {
     try {
@@ -7,19 +7,19 @@ const fileUpload = async (req, res) => {
             return res.status(400).json({ message: 'No files uploaded' });
         }
 
-        const results = req.files.map(file => ({
+        const results = await Promise.all(req.files.map(async file => ({
             originalName: file.originalname,
             fileName: file.filename,
-            path: `${process.env.BACKEND_URL}/data/temp/${file.filename}`,
+            path: await getFileUrl(FOLDER_PATH.TMP_PATH, file.filename),
             size: file.size,
             uploadedAt: new Date()
-        }));
+        })));
 
         res.status(201).json({ message: 'Files uploaded', files: results });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
-}
+};
 
 export {
     fileUpload

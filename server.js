@@ -33,8 +33,15 @@ mongoose.connect(process.env.MONGO_URI, {
     socketTimeoutMS: 45000, // Socket timeout
     family: 4  // Use IPv4, avoid IPv6
 })
-    .then(() => console.log('Connected to Azure Cosmos DB'))
-    .catch(err => console.error('Azure Cosmos DB connection error:', err));
+    .then(() => console.log(
+        process.env.NODE_ENV === "production" ?
+            'Connected to Azure Cosmos DB' : 'Connected to MongoDB')
+    )
+    .catch(err => console.error(
+        process.env.NODE_ENV === "production" ?
+            'Azure Cosmos DB connection error:' : 'MongoDB connection error:'
+        , err
+    ));
 
 app.use('/auth', authRoutes);
 app.use("/user", userRoutes);

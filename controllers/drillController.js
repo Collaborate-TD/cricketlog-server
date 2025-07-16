@@ -3,7 +3,8 @@ import path from 'path';
 import Drill from '../models/Drill.js';
 import User from '../models/User.js';
 import { createDrillSchema, updateDrillSchema, drillIdParamSchema, drillFilterSchema, deleteDrillsSchema } from '../validation/drillValidation.js';
-import { uploadDrillFile, deleteDrillFiles } from '../utils/src/localUpload.js';
+import { deleteFileUrl, saveFileUrl } from '../utils/src/localUpload.js';
+import { FOLDER_PATH } from '../constants/folderPath.js';
 
 // Create Drill
 export const createDrill = async (req, res) => {
@@ -11,17 +12,34 @@ export const createDrill = async (req, res) => {
     if (error) return res.status(400).json({ message: error.details[0].message });
 
     try {
-        const { userId, fileName, isPrivate, title, desc } = value;
+        const { userId, tempFileName, isPrivate, title, desc } = value;
 
-        // Move file from temp to drills folder
-        const savedFileName = uploadDrillFile(fileName, userId);
+        const timestamp = Date.now();
+        const subFolder = `${userId}/`;
+        const fileName = `${timestamp}-${tempFileName}`;
+
+        const srcPath = path.join(FOLDER_PATH.TMP_PATH, tempFileName);
+        // Read file as buffer
+        const fileBuffer = fs.readFileSync(srcPath);
+
+        // Save video in local storage or cloud storage
+        const url = await saveFileUrl(
+            FOLDER_PATH.DRILL_PATH,
+            subFolder,
+            fileName,
+            fileBuffer
+        );
+
+        // Delete temporary file
+        fs.unlinkSync(srcPath);
 
         const drill = await Drill.create({
             userId,
             isPrivate: isPrivate ?? false,
-            fileName: savedFileName,
+            fileName: fileName,
             title,
-            desc
+            desc,
+            url
         });
 
         res.status(201).json({ message: 'Drill created successfully', data: drill });
@@ -38,19 +56,19 @@ export const getDrills = async (req, res) => {
 
     try {
         const drills = await Drill.find(filters).populate('userId', 'firstName lastName userName').sort({ createdAt: -1 });
-        const list = drills.map(d => ({
+        const list = await Promise.all(drills.map(async d => ({
             _id: d._id,
             userId: d.userId._id,
             ownerName: `${d.userId.firstName} ${d.userId.lastName}`,
             userName: d.userId.userName,
             fileName: d.fileName,
-            url: `${process.env.BACKEND_URL}/data/drills/${d.userId._id}/${d.fileName}`,
+            url: await getFileUrl(FOLDER_PATH.DRILL_PATH, `${d.userId._id}/${d.fileName}`),
             title: d.title,
             desc: d.desc,
             isPrivate: d.isPrivate,
             createdAt: d.createdAt,
             updatedAt: d.updatedAt
-        }));
+        })));
         res.status(200).json(list);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -119,11 +137,10 @@ export const deleteDrill = async (req, res) => {
         const drills = await Drill.find({ _id: { $in: ids }, userId });
         if (!drills.length) return res.status(404).json({ message: 'No drills found to delete.' });
 
-        // Delete files for each drill
-        const fileNames = drills.map(drill => drill.fileName);
-        if (fileNames.length > 0) {
-            // All drills belong to the same user, so use userId from the first drill
-            deleteDrillFiles(fileNames, drills[0].userId);
+        // Delete files for each drill (await if deleteFileUrl is async)
+        for (const drill of drills) {
+            const filePath = path.join(drill.userId.toString(), drill.fileName);
+            await deleteFileUrl(FOLDER_PATH.DRILL_PATH, filePath, drill.url, drill.userId);
         }
 
         // Delete drills from DB

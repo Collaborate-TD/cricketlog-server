@@ -3,7 +3,8 @@ import Video from '../models/Video.js';
 import path from 'path';
 import fs from 'fs';
 import { deleteVideosSchema, getVideoListSchema, updateVideoSchema, uploadVideoSchema } from '../validation/videoValidation.js';
-import { deleteVideoFile, getVideoUrl, saveVideoUrl } from '../utils/src/localUpload.js';
+import { deleteFileUrl, getFileUrl, saveFileUrl } from '../utils/src/localUpload.js';
+import { FOLDER_PATH } from '../constants/folderPath.js';
 
 // Get list of all videos
 const getVideoList = async (req, res) => {
@@ -49,11 +50,7 @@ const getVideoList = async (req, res) => {
             .exec();
 
         // Add debug logging
-        console.log("Raw videos from DB:", videos.map(v => ({
-            id: v._id,
-            blobUrl: v.url,
-            fileName: v.fileName
-        })));
+        // console.log("Raw videos from DB:", videos.map(v => ({ id: v._id, blobUrl: v.url, fileName: v.fileName })));
 
         // Use Promise.all to resolve all async operations in the map
         const list = await Promise.all(videos.map(async video => {
@@ -61,7 +58,7 @@ const getVideoList = async (req, res) => {
             const subFolder = `${video.studentId.toString()}/${video.fileName}`;
 
             // Get the video URL from local or cloud storage else empty string
-            const url = await getVideoUrl(subFolder);
+            const url = await getFileUrl(FOLDER_PATH.VIDEO_PATH, subFolder);
 
             return {
                 _id: video._id,
@@ -109,10 +106,10 @@ const uploadVideo = async (req, res) => {
             const fileBuffer = fs.readFileSync(file.path);
 
             // Save video in local storage or cloud storage
-            const url = await saveVideoUrl(
+            const url = await saveFileUrl(
+                FOLDER_PATH.VIDEO_PATH,
                 subFolder,
                 fileName,
-                ext,
                 fileBuffer
             );
 
@@ -220,8 +217,8 @@ const deleteVideos = async (req, res) => {
             // Student: delete videos and remove files
             const videos = await Video.find({ _id: { $in: ids }, studentId: userId });
             for (const video of videos) {
-                const filePath = path.join(video.studentId.toString(), 'raw', video.fileName);
-                await deleteVideoFile(filePath, video.url, video._id);
+                const filePath = path.join(video.studentId.toString(), video.fileName);
+                await deleteFileUrl(FOLDER_PATH.VIDEO_PATH, filePath, video.url, video._id);
             }
             const result = await Video.deleteMany({ _id: { $in: ids }, studentId: userId });
             return res.status(200).json({ message: 'Videos deleted', deletedCount: result.deletedCount });
