@@ -9,6 +9,7 @@ const fileUpload = async (req, res) => {
 
         const results = [];
         for (const file of req.files) {
+            console.log(`Processing file: ${file}`);
             const fileBuffer = fs.readFileSync(file.path);
 
             console.log(`Processing file path: ${file.path}`);
