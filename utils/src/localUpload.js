@@ -51,7 +51,7 @@ export async function saveFileUrl(container, subFolder, fileName, fileBuffer) {
     }
     else {
         const blobName = `${subFolder}${fileName}`;
-        return await uploadToBlob(container, blobName, fileBuffer) ?? "";
+        // return await uploadToBlob(container, blobName, fileBuffer) ?? "";
     }
 }
 
