@@ -15,6 +15,8 @@ const fileUpload = async (req, res) => {
             uploadedAt: new Date()
         })));
 
+        console.log("Files uploaded:", results);
+
         res.status(201).json({ message: 'Files uploaded', files: results });
     } catch (err) {
         res.status(500).json({ message: err.message });
