@@ -7,13 +7,24 @@ const fileUpload = async (req, res) => {
             return res.status(400).json({ message: 'No files uploaded' });
         }
 
-        const results = await Promise.all(req.files.map(async file => ({
-            originalName: file.originalname,
-            fileName: file.filename,
-            path: await getFileUrl(FOLDER_PATH.TMP_PATH, file.filename),
-            size: file.size,
-            uploadedAt: new Date()
-        })));
+        const results = [];
+        for (const file of req.files) {
+            const fileBuffer = fs.readFileSync(file.path);
+
+            const pathUrl = await saveFileUrl(
+                FOLDER_PATH.TMP_PATH,
+                "",
+                file.filename,
+                fileBuffer
+            );
+            results.push({
+                originalName: file.originalname,
+                fileName: file.filename,
+                path: pathUrl,
+                size: file.size,
+                uploadedAt: new Date()
+            });
+        }
 
         console.log("Files uploaded:", results);
 
