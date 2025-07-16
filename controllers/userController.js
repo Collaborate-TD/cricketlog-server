@@ -71,6 +71,9 @@ const updateUser = async (req, res) => {
             // Read file as buffer
             const fileBuffer = fs.readFileSync(srcPath);
 
+            console.log(`----Processing file path: ${srcPath}`);
+            console.log(`----Photo file path: ${FOLDER_PATH.PROFILE_PHOTO_PATH}`);
+
             // Save video in local storage or cloud storage
             await saveFileUrl(
                 FOLDER_PATH.PROFILE_PHOTO_PATH,
