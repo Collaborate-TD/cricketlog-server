@@ -1,14 +1,13 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { FOLDER_PATH } from '../../constants/folderPath';
 
 export function getTempMulterUpload({ allowedExtensions = [], maxSizeMB = 5, fieldName = 'files', maxCount = 10 } = {}) {
     const MAX_SIZE = maxSizeMB * 1024 * 1024;
 
     const tempStorage = multer.diskStorage({
         destination: (req, file, cb) => {
-            const tempDir = FOLDER_PATH.TMP_PATH;
+            const tempDir = process.env.NODE_ENV === "production" ? "temp" : "data/temp";
             fs.mkdirSync(tempDir, { recursive: true });
             cb(null, tempDir);
         },
