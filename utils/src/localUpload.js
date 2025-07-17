@@ -86,14 +86,14 @@ export async function deleteFileUrl(container, path, blobUrl, fileId) {
     }
     else {
         try {
+            let blobPath = path;
             if (blobUrl) {
-                console.log(`Deleting blob: ${blobUrl}`);
                 // Extract blob name from URL
                 const url = new URL(blobUrl);
-                const blobPath = url.pathname.substring(1); // Remove leading '/'
+                blobPath = url.pathname.substring(1); // Remove leading '/'
                 // Delete the blob
-                await deleteBlob(container, blobPath);
             }
+            await deleteBlob(container, blobPath);
         } catch (err) {
             console.warn(`Failed to delete blob for file ${fileId}`, err);
         }
