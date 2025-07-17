@@ -12,13 +12,13 @@ export const createDrill = async (req, res) => {
     if (error) return res.status(400).json({ message: error.details[0].message });
 
     try {
-        const { userId, tempFileName, isPrivate, title, desc } = value;
+        const { userId, fileName, isPrivate, title, desc } = value;
 
         const timestamp = Date.now();
         const subFolder = `${userId}/`;
-        const fileName = `${timestamp}-${tempFileName}`;
+        const newFileName = `${timestamp}-${fileName}`;
 
-        const srcPath = path.join(FOLDER_PATH.TMP_PATH, tempFileName);
+        const srcPath = path.join(FOLDER_PATH.TMP_PATH, fileName);
         // Read file as buffer
         const fileBuffer = fs.readFileSync(srcPath);
 
@@ -26,7 +26,7 @@ export const createDrill = async (req, res) => {
         const url = await saveFileUrl(
             FOLDER_PATH.DRILL_PATH,
             subFolder,
-            fileName,
+            newFileName,
             fileBuffer
         );
 
@@ -36,7 +36,7 @@ export const createDrill = async (req, res) => {
         const drill = await Drill.create({
             userId,
             isPrivate: isPrivate ?? false,
-            fileName: fileName,
+            fileName: newFileName,
             title,
             desc,
             url
