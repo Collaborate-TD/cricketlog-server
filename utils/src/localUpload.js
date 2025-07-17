@@ -61,6 +61,8 @@ export async function saveFileUrl(container, subFolder, fileName, fileBuffer, ol
             fileBuffer = await downloadBlobToBuffer(FOLDER_PATH.TMP_PATH, oldFileName);
         }
 
+        console.log(`Uploading file to Azure Blob Storage: ${fileBuffer}`);
+
         return await uploadToBlob(container, blobName, fileBuffer) ?? "";
     }
 }
