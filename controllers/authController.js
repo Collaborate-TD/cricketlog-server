@@ -2,8 +2,11 @@ import User from '../models/User.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import fs from 'fs';
 import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from '../validation/authValidation.js';
-import { saveProfilePhoto } from '../utils/src/profilePhotoHandler.js';
+import { deleteFileUrl, getFileUrl, saveFileUrl } from '../utils/src/localUpload.js';
+import path from 'path';
+import { FOLDER_PATH } from '../constants/folderPath.js';
 
 // LOGIN
 const loginUser = async (req, res) => {
@@ -37,9 +40,8 @@ const loginUser = async (req, res) => {
             return res.status(401).json({ message: 'Invalid email or password.' });
         }
 
-        const profilePhotoUrl = user.profilePhoto
-            ? `${process.env.BACKEND_URL}/data/profile/${user._id}/${user.profilePhoto}`
-            : null;
+        const subFolder = `${user._id.toString()}/${user.profilePhoto}`;
+        const profilePhotoUrl = await getFileUrl(FOLDER_PATH.PROFILE_PHOTO_PATH, subFolder);
 
         const token = jwt.sign(
             {
@@ -112,14 +114,30 @@ const registerUser = async (req, res) => {
         await user.save();
 
         // Handle profile photo if present
-        let profilePhotoFileName = null;
         if (req.body.profilePhoto) {
-            profilePhotoFileName = saveProfilePhoto({
-                filename: req.body.profilePhoto,
-                userId: user._id.toString(),
-                username: userName
-            });
-            user.profilePhoto = profilePhotoFileName;
+            const timestamp = Date.now();
+            const subFolder = `${user._id}/`;
+            const fileName = `${timestamp}-${req.body.profilePhoto}`;
+
+            const srcPath = path.join(FOLDER_PATH.TMP_PATH, req.body.profilePhoto);
+            // Read file as buffer
+            const fileBuffer = fs.readFileSync(srcPath);
+
+            // Save video in local storage or cloud storage
+            await saveFileUrl(
+                FOLDER_PATH.PROFILE_PHOTO_PATH,
+                subFolder,
+                fileName,
+                fileBuffer
+            );
+
+            // Delete temporary file
+            fs.unlinkSync(srcPath);
+
+            // Delete temporary file from TMP_PATH
+            await deleteFileUrl(FOLDER_PATH.TMP_PATH, req.body.profilePhoto, null, user._id);
+
+            user.profilePhoto = fileName;
             await user.save();
         }
 
