@@ -1,4 +1,4 @@
-import { saveFileUrl } from '../utils/src/localUpload.js';
+import { getFileUrl, saveFileUrl } from '../utils/src/localUpload.js';
 import { FOLDER_PATH } from '../constants/folderPath.js';
 import fs from "fs";
 
@@ -22,7 +22,7 @@ const fileUpload = async (req, res) => {
             results.push({
                 originalName: file.originalname,
                 fileName: file.filename,
-                path: pathUrl,
+                path: await getFileUrl(FOLDER_PATH.TMP_PATH, file.filename),
                 size: file.size,
                 uploadedAt: new Date()
             });
