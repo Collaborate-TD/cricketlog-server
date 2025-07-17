@@ -137,7 +137,7 @@ export const deleteDrill = async (req, res) => {
 
         // Find all drills to be deleted
         const drills = await Drill.find({ _id: { $in: ids }, userId });
-        if (!drills.length) return res.status(404).json({ message: 'No drills found to delete.' });
+        if (!drills.length) return res.status(200).json({ message: 'No drills found to delete.' });
 
         // Delete files for each drill (await if deleteFileUrl is async)
         for (const drill of drills) {

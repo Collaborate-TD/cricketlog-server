@@ -219,7 +219,7 @@ const deleteVideos = async (req, res) => {
             const videos = await Video.find({ _id: { $in: ids }, studentId: userId });
             for (const video of videos) {
                 const filePath = path.join(video.studentId.toString(), video.fileName);
-                await deleteFileUrl(FOLDER_PATH.VIDEO_PATH, filePath, video.url, video._id);
+                await deleteFileUrl(FOLDER_PATH.VIDEO_PATH, filePath, null, video._id);
             }
             const result = await Video.deleteMany({ _id: { $in: ids }, studentId: userId });
             return res.status(200).json({ message: 'Videos deleted', deletedCount: result.deletedCount });
