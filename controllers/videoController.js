@@ -55,6 +55,7 @@ const getVideoList = async (req, res) => {
         // Use Promise.all to resolve all async operations in the map
         const list = await Promise.all(videos.map(async video => {
             const student = video.studentId ? await User.findById(video.studentId) : null;
+            const coach = video.coachId ? await User.findById(video.coachId) : null;
             const subFolder = `${video.studentId.toString()}/${video.fileName}`;
 
             // Get the video URL from local or cloud storage else empty string
@@ -69,6 +70,7 @@ const getVideoList = async (req, res) => {
                 studentId: video.studentId,
                 coachId: video.coachId,
                 studentName: student ? `${student.firstName} ${student.lastName || ""}` : 'Unknown',
+                coachName: coach ? `${coach.firstName} ${coach.lastName || ""}` : 'Unknown',
             };
         }));
 
