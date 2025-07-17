@@ -89,7 +89,7 @@ export const getDrill = async (req, res) => {
             ownerName: `${drill.userId.firstName} ${drill.userId.lastName}`,
             userName: drill.userId.userName,
             fileName: drill.fileName,
-            url: `${process.env.BACKEND_URL}/data/drills/${drill.userId._id}/${drill.fileName}`,
+            url: await getFileUrl(FOLDER_PATH.DRILL_PATH, `${drill.userId._id}/${drill.fileName}`),
             title: drill.title,
             desc: drill.desc,
             isPrivate: drill.isPrivate,
