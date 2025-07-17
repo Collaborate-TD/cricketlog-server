@@ -3,7 +3,7 @@ import path from 'path';
 import Drill from '../models/Drill.js';
 import User from '../models/User.js';
 import { createDrillSchema, updateDrillSchema, drillIdParamSchema, drillFilterSchema, deleteDrillsSchema } from '../validation/drillValidation.js';
-import { deleteFileUrl, saveFileUrl } from '../utils/src/localUpload.js';
+import { deleteFileUrl, getFileUrl, saveFileUrl } from '../utils/src/localUpload.js';
 import { FOLDER_PATH } from '../constants/folderPath.js';
 
 // Create Drill
