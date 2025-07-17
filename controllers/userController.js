@@ -1,8 +1,11 @@
 import User from '../models/User.js';
 import { USER_ROLES } from '../constants/userRoles.js';
 import { updateUserSchema } from '../validation/userValidation.js';
-import { saveProfilePhoto } from '../utils/src/profilePhotoHandler.js';
+import { deleteFileUrl, getFileUrl, saveFileUrl } from '../utils/src/localUpload.js';
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+import { FOLDER_PATH } from '../constants/folderPath.js';
 
 // Get single user by ID
 const getUserDetails = async (req, res) => {
@@ -60,12 +63,30 @@ const updateUser = async (req, res) => {
         }
 
         if (updates.profilePhoto) {
-            const profilePhoto = saveProfilePhoto({
-                filename: updates.profilePhoto,
-                userId: req.params.id,
-                username: user.userName
-            });
-            updates.profilePhoto = profilePhoto;
+            const timestamp = Date.now();
+            const subFolder = `${user._id}/`;
+            const fileName = `${timestamp}-${updates.profilePhoto}`;
+
+            const srcPath = path.join(FOLDER_PATH.TEMP_PATH, updates.profilePhoto);
+            // Read file as buffer
+            const fileBuffer = fs.readFileSync(srcPath);
+
+            // Save video in local storage or cloud storage
+            await saveFileUrl(
+                FOLDER_PATH.PROFILE_PHOTO_PATH,
+                subFolder,
+                fileName,
+                fileBuffer
+            );
+
+            // Delete temporary file
+            fs.unlinkSync(srcPath);
+
+            // Delete temporary file from TMP_PATH
+            await deleteFileUrl(FOLDER_PATH.TMP_PATH, updates.profilePhoto, null, user._id);
+
+            // Save profile photo name in updates
+            updates.profilePhoto = fileName;
         }
 
         const updatedUser = await User.findByIdAndUpdate(
@@ -76,9 +97,8 @@ const updateUser = async (req, res) => {
 
         if (!updatedUser) return res.status(404).json({ message: 'User not found.' });
 
-        const profilePhotoUrl = updatedUser.profilePhoto
-            ? `${process.env.BACKEND_URL}/data/profile/${updatedUser._id}/${updatedUser.profilePhoto}`
-            : null;
+        const subFolder = `${updatedUser._id.toString()}/${updatedUser.profilePhoto}`;
+        const profilePhotoUrl = await getFileUrl(FOLDER_PATH.PROFILE_PHOTO_PATH, subFolder);
 
         const token = jwt.sign(
             {

@@ -5,7 +5,8 @@ const drillSchema = new mongoose.Schema({
     isPrivate: { type: Boolean, default: false },
     fileName: { type: String, required: true },
     title: { type: String, required: true },
-    desc: { type: String, required: false },
+    desc: { type: String, required: false, default: '' },
+    url: { type: String, default: "" },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });

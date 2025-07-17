@@ -3,8 +3,8 @@ import Video from '../models/Video.js';
 import path from 'path';
 import fs from 'fs';
 import { deleteVideosSchema, getVideoListSchema, updateVideoSchema, uploadVideoSchema } from '../validation/videoValidation.js';
-import generateRandomString from '../utils/src/generateRandomString.js';
-import Joi from 'joi';
+import { deleteFileUrl, getFileUrl, saveFileUrl } from '../utils/src/localUpload.js';
+import { FOLDER_PATH } from '../constants/folderPath.js';
 
 // Get list of all videos
 const getVideoList = async (req, res) => {
@@ -45,26 +45,36 @@ const getVideoList = async (req, res) => {
             return res.status(403).json({ message: 'You are not authorized to view these videos or invalid role.' });
         }
 
-        const videos = await Video.find(filter).sort({ createdAt: -1 });
+        //  const videos = await Video.find(filter).sort({ createdAt: -1 });
+        const videos = await Video.find(filter).sort({ _id: -1 })
+            .exec();
+
+        // Add debug logging
+        // console.log("Raw videos from DB:", videos.map(v => ({ id: v._id, blobUrl: v.url, fileName: v.fileName })));
 
         // Use Promise.all to resolve all async operations in the map
         const list = await Promise.all(videos.map(async video => {
-            const filePath = path.join('data', 'videos', video.studentId.toString(), 'raw', video.fileName);
-            const fileExists = fs.existsSync(filePath);
             const student = video.studentId ? await User.findById(video.studentId) : null;
+            const coach = video.coachId ? await User.findById(video.coachId) : null;
+            const subFolder = `${video.studentId.toString()}/${video.fileName}`;
+
+            // Get the video URL from local or cloud storage else empty string
+            const url = await getFileUrl(FOLDER_PATH.VIDEO_PATH, subFolder);
+
             return {
                 _id: video._id,
-                url: fileExists ? `${process.env.BACKEND_URL}${video.thumbnailUrl}` : null,
-                thumbnailUrl: fileExists ? video.thumbnailUrl : null,
+                url: url,
+                thumbnailUrl: null,
                 title: video.originalName || video.fileName,
                 isFavourite: video.isFavourite.includes(userId),
                 studentId: video.studentId,
                 coachId: video.coachId,
                 studentName: student ? `${student.firstName} ${student.lastName || ""}` : 'Unknown',
+                coachName: coach ? `${coach.firstName} ${coach.lastName || ""}` : 'Unknown',
             };
         }));
 
-        res.status(200).json({ list });
+        return res.status(200).json({ list });
     } catch (err) {
         console.error('Get Video List Error:', err);
         res.status(500).json({ message: 'Server error while fetching videos.' });
@@ -87,45 +97,55 @@ const uploadVideo = async (req, res) => {
     try {
         const results = [];
         for (const file of req.files) {
-            const ext = path.extname(file.originalname).toLowerCase();
             const timestamp = Date.now();
-            const randStr = generateRandomString(6);
-            const newFileName = `video_${timestamp}_${randStr}${ext}`;
-            const userDir = path.join('data', 'videos', studentId, 'raw');
-            fs.mkdirSync(userDir, { recursive: true });
-            const destPath = path.join(userDir, newFileName);
 
-            // Move file from temp to user folder
-            fs.renameSync(file.path, destPath);
+            // Generate file details
+            const subFolder = `${studentId}/`;
+            const fileName = `${timestamp}-${file.originalname}`;
 
-            const url = `/data/videos/${studentId}/raw/${newFileName}`;
-            const thumbnailUrl = url;
-            const uploadedAt = new Date(timestamp);
+            // Read file as buffer
+            const fileBuffer = fs.readFileSync(file.path);
 
-            // Save to DB
-            const videoDoc = await Video.create({
+            // Save video in local storage or cloud storage
+            const url = await saveFileUrl(
+                FOLDER_PATH.VIDEO_PATH,
+                subFolder,
+                fileName,
+                fileBuffer
+            );
+
+            // Delete temporary file
+            fs.unlinkSync(file.path);
+
+            // Create video record with updated URL
+            const newVideo = new Video({
                 studentId,
                 coachId,
-                thumbnailUrl,
                 originalName: file.originalname,
-                fileName: newFileName,
+                fileName,
                 size: file.size,
+                url,
+                thumbnailUrl: null,
             });
+
+            const savedVideo = await newVideo.save();
 
             results.push({
-                _id: videoDoc._id,
-                studentId,
-                coachId,
-                thumbnailUrl,
-                originalName: file.originalname,
-                size: file.size,
-                uploadedAt
+                _id: savedVideo._id,
+                studentId: savedVideo.studentId,
+                coachId: savedVideo.coachId,
+                thumbnailUrl: savedVideo.thumbnailUrl,
+                originalName: savedVideo.originalName,
+                url: url,
             });
         }
-
-        res.status(201).json({ message: 'Files uploaded', files: results });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(201).json({
+            message: 'Video uploaded successfully',
+            videos: results
+        });
+    } catch (error) {
+        console.error('Upload error:', error);
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -198,14 +218,8 @@ const deleteVideos = async (req, res) => {
             // Student: delete videos and remove files
             const videos = await Video.find({ _id: { $in: ids }, studentId: userId });
             for (const video of videos) {
-                const filePath = path.join('data', 'videos', video.studentId.toString(), 'raw', video.fileName);
-                if (fs.existsSync(filePath)) {
-                    try {
-                        fs.unlinkSync(filePath);
-                    } catch (err) {
-                        console.warn(`Failed to delete file: ${filePath}`, err);
-                    }
-                }
+                const filePath = path.join(video.studentId.toString(), video.fileName);
+                await deleteFileUrl(FOLDER_PATH.VIDEO_PATH, filePath, video.url, video._id);
             }
             const result = await Video.deleteMany({ _id: { $in: ids }, studentId: userId });
             return res.status(200).json({ message: 'Videos deleted', deletedCount: result.deletedCount });

@@ -5,7 +5,7 @@ export const createDrillSchema = Joi.object({
     isPrivate: Joi.boolean().optional(),
     fileName: Joi.string().required(),
     title: Joi.string().required(),
-    desc: Joi.string().optional()
+    desc: Joi.string().allow('').optional().default(''),
 });
 
 export const updateDrillSchema = Joi.object({
