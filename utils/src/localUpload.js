@@ -36,11 +36,16 @@ export async function getFileUrl(container, subFolder) {
  * If in production, it uploads the file to Azure Blob Storage.
  * @return {Promise<string>} The URL of the saved file.
  */
-export async function saveFileUrl(container, subFolder, fileName, fileBuffer) {
+export async function saveFileUrl(container, subFolder, fileName, fileBuffer, oldFileName) {
     if (process.env.NODE_ENV !== 'production') {
         const userDir = path.join(container, subFolder);
         fs.mkdirSync(userDir, { recursive: true });
         const destPath = path.join(userDir, fileName);
+
+        if (!fileBuffer) {
+            const srcPath = path.join(FOLDER_PATH.TMP_PATH, oldFileName);
+            fileBuffer = fs.readFileSync(srcPath);
+        }
 
         // Write file buffer into user folder
         fs.writeFileSync(destPath, fileBuffer);
@@ -51,6 +56,11 @@ export async function saveFileUrl(container, subFolder, fileName, fileBuffer) {
     }
     else {
         const blobName = `${subFolder}${fileName}`;
+
+        if (!fileBuffer) {
+            fileBuffer = await downloadBlobToBuffer(FOLDER_PATH.TMP_PATH, oldFileName);
+        }
+
         return await uploadToBlob(container, blobName, fileBuffer) ?? "";
     }
 }

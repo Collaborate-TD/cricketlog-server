@@ -101,7 +101,6 @@ const uploadVideo = async (req, res) => {
             const subFolder = `${studentId}/`;
             const fileName = `${timestamp}-${file.originalname}`;
 
-            console.log(`Processing file path: ${file.path}`);
             // Read file as buffer
             const fileBuffer = fs.readFileSync(file.path);
 

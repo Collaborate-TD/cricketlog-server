@@ -67,19 +67,13 @@ const updateUser = async (req, res) => {
             const subFolder = `${user._id}/`;
             const fileName = `${timestamp}-${updates.profilePhoto}`;
 
-            const srcPath = path.join(FOLDER_PATH.TMP_PATH, updates.profilePhoto);
-            // Read file as buffer
-            const fileBuffer = fs.readFileSync(srcPath);
-
-            console.log(`----Processing file path: ${srcPath}`);
-            console.log(`----Photo file path: ${FOLDER_PATH.PROFILE_PHOTO_PATH}`);
-
             // Save video in local storage or cloud storage
             await saveFileUrl(
                 FOLDER_PATH.PROFILE_PHOTO_PATH,
                 subFolder,
                 fileName,
-                fileBuffer
+                "",
+                updates.profilePhoto
             );
 
             // Delete temporary file

@@ -10,17 +10,15 @@ const fileUpload = async (req, res) => {
 
         const results = [];
         for (const file of req.files) {
-            console.log(`Processing file: ${file}`);
             const fileBuffer = fs.readFileSync(file.path);
 
-            console.log(`Processing file path: ${file.path}`);
             const pathUrl = await saveFileUrl(
                 FOLDER_PATH.TMP_PATH,
                 "",
                 file.filename,
                 fileBuffer
             );
-            console.log(`File saved at: ${pathUrl}`);
+
             results.push({
                 originalName: file.originalname,
                 fileName: file.filename,
@@ -29,8 +27,6 @@ const fileUpload = async (req, res) => {
                 uploadedAt: new Date()
             });
         }
-
-        console.log("Files uploaded:", results);
 
         res.status(201).json({ message: 'Files uploaded', files: results });
     } catch (err) {

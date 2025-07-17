@@ -114,4 +114,36 @@ export const generateSasUrl = async (containerName, blobName) => {
         // Fall back to direct URL
         return `${process.env.BACKEND_FOLDER}/${containerName}/${blobName}`;
     }
-};
+}
+
+/**
+ * Download a blob from Azure Blob Storage to a buffer
+ * @param {string} containerName Container name
+ * @param {string} blobName Blob name
+ * @returns {Promise<Buffer>} The blob data as a buffer
+ */
+export async function downloadBlobToBuffer(containerName, blobName) {
+    const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING);
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    const downloadBlockBlobResponse = await blockBlobClient.download();
+    return await streamToBuffer(downloadBlockBlobResponse.readableStreamBody);
+}
+
+/**
+ * Convert a readable stream to a buffer
+ * @param {ReadableStream} readableStream The readable stream
+ * @returns {Promise<Buffer>} The data from the stream as a buffer
+ */
+export async function streamToBuffer(readableStream) {
+    return new Promise((resolve, reject) => {
+        const chunks = [];
+        readableStream.on("data", (data) => {
+            chunks.push(data instanceof Buffer ? data : Buffer.from(data));
+        });
+        readableStream.on("end", () => {
+            resolve(Buffer.concat(chunks));
+        });
+        readableStream.on("error", reject);
+    });
+}
