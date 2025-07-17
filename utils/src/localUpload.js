@@ -1,6 +1,5 @@
 import path from 'path';
 import fs from 'fs';
-import generateRandomString from './generateRandomString.js';
 import { FOLDER_PATH } from '../../constants/folderPath.js';
 import { deleteBlob, downloadBlobToBuffer, generateSasUrl, uploadToBlob } from './azureStorage.js';
 
@@ -51,7 +50,7 @@ export async function saveFileUrl(container, subFolder, fileName, fileBuffer, ol
         fs.writeFileSync(destPath, fileBuffer);
 
         // Return the local file path
-        return await getFileUrl(`${subFolder}/${fileName}`, '');
+        return await getFileUrl(`${container}${subFolder}`, fileName);
 
     }
     else {
@@ -73,10 +72,10 @@ export async function saveFileUrl(container, subFolder, fileName, fileBuffer, ol
  * @param {string} blobUrl - The URL of the blob in Azure Storage (if applicable).
  * @param {string} fileId - The ID of the file being deleted (for logging purposes).
  */
-export async function deleteFileUrl(container, path, blobUrl, fileId) {
+export async function deleteFileUrl(container, paths, blobUrl, fileId) {
     if (process.env.NODE_ENV !== 'production') {
         try {
-            const filePath = path.join(container, path);
+            const filePath = path.join(container, paths);
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
             }
@@ -86,7 +85,7 @@ export async function deleteFileUrl(container, path, blobUrl, fileId) {
     }
     else {
         try {
-            let blobPath = path;
+            let blobPath = paths;
             if (blobUrl) {
                 // Extract blob name from URL
                 const url = new URL(blobUrl);

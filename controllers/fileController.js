@@ -1,4 +1,4 @@
-import { getFileUrl, saveFileUrl } from '../utils/src/localUpload.js';
+import { saveFileUrl } from '../utils/src/localUpload.js';
 import { FOLDER_PATH } from '../constants/folderPath.js';
 import fs from "fs";
 
