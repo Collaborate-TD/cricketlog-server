@@ -13,7 +13,7 @@ const fileUpload = async (req, res) => {
             results.push({
                 originalName: file.originalname,
                 fileName: file.filename,
-                path: await getFileUrl(FOLDER_PATH.TMP_PATH, file.filename),
+                path: await getFileUrl(FOLDER_PATH.TEMP_PATH, file.filename),
                 size: file.size,
                 uploadedAt: new Date()
             });
