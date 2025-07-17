@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import fs from 'fs';
 import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from '../validation/authValidation.js';
-import { getFileUrl, saveFileUrl } from '../utils/src/localUpload.js';
+import { deleteFileUrl, getFileUrl, saveFileUrl } from '../utils/src/localUpload.js';
 import path from 'path';
 import { FOLDER_PATH } from '../constants/folderPath.js';
 
@@ -133,6 +133,9 @@ const registerUser = async (req, res) => {
 
             // Delete temporary file
             fs.unlinkSync(srcPath);
+
+            // Delete temporary file from TMP_PATH
+            await deleteFileUrl(FOLDER_PATH.TMP_PATH, req.body.profilePhoto, null, user._id);
 
             user.profilePhoto = fileName;
             await user.save();

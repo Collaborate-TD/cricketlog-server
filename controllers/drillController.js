@@ -33,6 +33,8 @@ export const createDrill = async (req, res) => {
         // Delete temporary file
         fs.unlinkSync(srcPath);
 
+        await deleteFileUrl(FOLDER_PATH.TMP_PATH, fileName, null, userId);
+
         const drill = await Drill.create({
             userId,
             isPrivate: isPrivate ?? false,
