@@ -87,6 +87,7 @@ export async function deleteFileUrl(container, path, blobUrl, fileId) {
     else {
         try {
             if (blobUrl) {
+                console.log(`Deleting blob: ${blobUrl}`);
                 // Extract blob name from URL
                 const url = new URL(blobUrl);
                 const blobPath = url.pathname.substring(1); // Remove leading '/'
