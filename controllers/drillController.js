@@ -18,7 +18,7 @@ export const createDrill = async (req, res) => {
         const subFolder = `${userId}/`;
         const newFileName = `${timestamp}-${fileName}`;
 
-        const srcPath = path.join(FOLDER_PATH.TMP_PATH, fileName);
+        const srcPath = path.join(FOLDER_PATH.TEMP_PATH, fileName);
         // Read file as buffer
         const fileBuffer = fs.readFileSync(srcPath);
 
