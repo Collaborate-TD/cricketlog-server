@@ -55,7 +55,7 @@ export const getDrills = async (req, res) => {
     if (error) return res.status(400).json({ message: error.details[0].message });
 
     try {
-        const drills = await Drill.find(filters).populate('userId', 'firstName lastName userName').sort({ createdAt: -1 });
+        const drills = await Drill.find(filters).populate('userId', 'firstName lastName userName').sort({ _id: -1 });
         const list = await Promise.all(drills.map(async d => ({
             _id: d._id,
             userId: d.userId._id,
