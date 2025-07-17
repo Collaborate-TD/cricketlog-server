@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import generateRandomString from './generateRandomString.js';
 import { FOLDER_PATH } from '../../constants/folderPath.js';
-import { deleteBlob, generateSasUrl, uploadToBlob } from './azureStorage.js';
+import { deleteBlob, downloadBlobToBuffer, generateSasUrl, uploadToBlob } from './azureStorage.js';
 
 /**
  * Generates a URL for a file.
