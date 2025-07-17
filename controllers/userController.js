@@ -1,7 +1,7 @@
 import User from '../models/User.js';
 import { USER_ROLES } from '../constants/userRoles.js';
 import { updateUserSchema } from '../validation/userValidation.js';
-import { deleteFileUrl, getFileUrl, saveFileUrl } from '../utils/src/localUpload.js';
+import { getFileUrl, saveFileUrl } from '../utils/src/localUpload.js';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
@@ -81,9 +81,6 @@ const updateUser = async (req, res) => {
 
             // Delete temporary file
             fs.unlinkSync(srcPath);
-
-            // Delete temporary file from TMP_PATH
-            await deleteFileUrl(FOLDER_PATH.TMP_PATH, updates.profilePhoto, null, user._id);
 
             // Save profile photo name in updates
             updates.profilePhoto = fileName;

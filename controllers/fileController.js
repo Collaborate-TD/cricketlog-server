@@ -10,15 +10,6 @@ const fileUpload = async (req, res) => {
 
         const results = [];
         for (const file of req.files) {
-            const fileBuffer = fs.readFileSync(file.path);
-
-            const pathUrl = await saveFileUrl(
-                FOLDER_PATH.TMP_PATH,
-                "",
-                file.filename,
-                fileBuffer
-            );
-
             results.push({
                 originalName: file.originalname,
                 fileName: file.filename,

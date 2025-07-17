@@ -33,8 +33,6 @@ export const createDrill = async (req, res) => {
         // Delete temporary file
         fs.unlinkSync(srcPath);
 
-        await deleteFileUrl(FOLDER_PATH.TMP_PATH, fileName, null, userId);
-
         const drill = await Drill.create({
             userId,
             isPrivate: isPrivate ?? false,
@@ -142,7 +140,7 @@ export const deleteDrill = async (req, res) => {
         // Delete files for each drill (await if deleteFileUrl is async)
         for (const drill of drills) {
             const filePath = path.join(drill.userId.toString(), drill.fileName);
-            await deleteFileUrl(FOLDER_PATH.DRILL_PATH, filePath, drill.url, drill.userId);
+            await deleteFileUrl(FOLDER_PATH.DRILL_PATH, filePath, null, drill.userId);
         }
 
         // Delete drills from DB
