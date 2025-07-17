@@ -83,7 +83,7 @@ const updateUser = async (req, res) => {
             fs.unlinkSync(srcPath);
 
             // Delete temporary file from TMP_PATH
-            await deleteFileUrl(FOLDER_PATH.TEMP_PATH, updates.profilePhoto, null, user._id);
+            await deleteFileUrl(FOLDER_PATH.TMP_PATH, updates.profilePhoto, null, user._id);
 
             // Save profile photo name in updates
             updates.profilePhoto = fileName;
