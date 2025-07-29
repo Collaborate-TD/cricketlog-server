@@ -133,8 +133,8 @@ Login → View Feedback → Watch Video + Comments → Review Drill Suggestions
 ---
 ### Running the Project
 
-npm install
-npm start
+1. npm install  
+2. npm start
 
 Note: If you encounter issues after the first run, adjust your .env file and run npm start again.
 
